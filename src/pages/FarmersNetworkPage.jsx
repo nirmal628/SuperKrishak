@@ -33,6 +33,10 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
   const [filterType, setFilterType] = useState('ALL');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const availableSubOrganizations = isOrg
+    ? subOrganizations.filter(s => s.orgId === entityId)
+    : subOrganizations;
+
   // New farmer form state
   const [newFarmer, setNewFarmer] = useState({
     name: '',
@@ -42,7 +46,7 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
     occupation: 'Commercial Farmer',
     location: 'Kathmandu',
     orgId: organizations[0]?.id || '',
-    subOrgId: subOrganizations[0]?.id || '',
+    subOrgId: availableSubOrganizations[0]?.id || '',
     gender: 'Male',
     farmingType: 'Crops'
   });
@@ -122,7 +126,7 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
       occupation: 'Commercial Farmer',
       location: 'Kathmandu',
       orgId: organizations[0]?.id || '',
-      subOrgId: subOrganizations[0]?.id || '',
+      subOrgId: availableSubOrganizations[0]?.id || '',
       gender: 'Male',
       farmingType: 'Crops'
     });
@@ -391,20 +395,22 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
             </div>
           </div>
 
-          {isAdmin && (
+          {(isAdmin || isOrg) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Assign Parent Org</label>
-                <select
-                  value={newFarmer.orgId}
-                  onChange={(e) => setNewFarmer({ ...newFarmer, orgId: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white cursor-pointer"
-                >
-                  {organizations.map(o => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
-                  ))}
-                </select>
-              </div>
+              {isAdmin && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Assign Parent Org</label>
+                  <select
+                    value={newFarmer.orgId}
+                    onChange={(e) => setNewFarmer({ ...newFarmer, orgId: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white cursor-pointer"
+                  >
+                    {organizations.map(o => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Assign Sub-Org</label>
                 <select
@@ -413,7 +419,7 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
                   className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-purple-600 bg-white cursor-pointer"
                 >
                   <option value="">None / Unassigned</option>
-                  {subOrganizations.map(s => (
+                  {availableSubOrganizations.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>

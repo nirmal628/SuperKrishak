@@ -225,7 +225,7 @@ export const INITIAL_WARNINGS = [
 
 export const INITIAL_ACCESS_CONTROL = {
   sendMessage: { 'org_1': true, 'org_2': false, 'org_3': true, 'sub_1': true, 'sub_2': true, 'sub_3': false },
-  addFarmers: { 'org_1': true, 'org_2': false, 'org_3': true, 'sub_1': false, 'sub_2': false, 'sub_3': false }
+  addFarmers: { 'org_1': true, 'org_2': false, 'org_3': true, 'sub_1': true, 'sub_2': false, 'sub_3': false }
 };
 
 export const PDF_MOCK_DATA = {

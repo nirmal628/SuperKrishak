@@ -114,7 +114,16 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
 
         {viewMode === 'map' ? (
           <div className="relative">
-            <LeafletMap meters={filteredMeters} height="520px" center={[27.7, 85.3]} zoom={7} />
+            <LeafletMap
+              meters={filteredMeters}
+              height="520px"
+              center={[27.7, 85.3]}
+              zoom={7}
+              onMeterClick={(meterId) => {
+                onSelectMeter(meterId);
+                onNavigate('gpkm_detail');
+              }}
+            />
             <div className="absolute left-5 bottom-5 z-[400] bg-white/95 border border-gray-200 rounded-lg p-3 text-[11px] shadow-md">
               <p className="font-bold text-gray-700 mb-2">Map View Controls</p>
               <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-brand-blue" />Active Device</p>

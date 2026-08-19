@@ -4,6 +4,7 @@ import L from 'leaflet';
 export default function LeafletMap({ 
   meters = [], 
   farmers = [], 
+  onMeterClick,
   center = [27.7, 85.3], 
   zoom = 10,
   height = "400px" 
@@ -38,20 +39,23 @@ export default function LeafletMap({
     // Add meters
     meters.forEach(m => {
       if (m.location) {
-        L.circleMarker(m.location, {
+        const meterMarker = L.circleMarker(m.location, {
           radius: 8,
           fillColor: '#205B90',
           color: '#ffffff',
           weight: 2,
           fillOpacity: 0.9
-        })
+          });
+
+          meterMarker
         .bindPopup(`
           <div style="font-family: Inter, sans-serif; padding: 2px;">
             <p style="font-weight: bold; font-size: 13px; color: #1F2937; margin: 0 0 2px 0;">${m.name}</p>
             <p style="font-size: 11px; color: #6B7280; font-family: monospace; margin: 0;">${m.aepcId}</p>
           </div>
         `)
-        .addTo(group);
+          .on('click', () => onMeterClick?.(m.id))
+          .addTo(group);
       }
     });
 
