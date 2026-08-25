@@ -1,33 +1,28 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { 
-  Building2, 
-  GitMerge, 
-  Users, 
-  Radio, 
-  AlertTriangle, 
-  Send, 
-  Printer, 
-  MapPin, 
-  CheckCircle2, 
-  Activity 
-} from 'lucide-react';
-import LeafletMap from '../components/widgets/LeafletMap';
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useData } from "../context/DataContext";
+import {
+  Building2,
+  GitMerge,
+  Users,
+  Radio,
+  AlertTriangle,
+  Send,
+  Printer,
+  MapPin,
+  CheckCircle2,
+  Activity,
+} from "lucide-react";
+import LeafletMap from "../components/widgets/LeafletMap";
+import InfoTooltip from "../components/common/InfoTooltip";
 
 export default function DashboardPage({ onNavigate }) {
   const { role, isAdmin, isOrg, isSubOrg, entityId } = useAuth();
-  const { 
-    organizations, 
-    subOrganizations, 
-    farmers, 
-    gpkm, 
-    fields, 
-    warnings 
-  } = useData();
+  const { organizations, subOrganizations, farmers, gpkm, fields, warnings } =
+    useData();
 
-  const [selectedOrgFilter, setSelectedOrgFilter] = useState('ALL');
-  const [selectedSubFilter, setSelectedSubFilter] = useState('ALL');
+  const [selectedOrgFilter, setSelectedOrgFilter] = useState("ALL");
+  const [selectedSubFilter, setSelectedSubFilter] = useState("ALL");
 
   // Filter scoped data
   let scopedFarmers = [...farmers];
@@ -35,36 +30,50 @@ export default function DashboardPage({ onNavigate }) {
   let scopedWarnings = [...warnings];
 
   if (isOrg) {
-    scopedFarmers = scopedFarmers.filter(f => f.orgId === entityId);
-    scopedMeters = scopedMeters.filter(m => m.orgId === entityId);
-    scopedWarnings = scopedWarnings.filter(w => w.orgId === entityId);
+    scopedFarmers = scopedFarmers.filter((f) => f.orgId === entityId);
+    scopedMeters = scopedMeters.filter((m) => m.orgId === entityId);
+    scopedWarnings = scopedWarnings.filter((w) => w.orgId === entityId);
   } else if (isSubOrg) {
-    scopedFarmers = scopedFarmers.filter(f => f.subOrgId === entityId);
-    scopedMeters = scopedMeters.filter(m => m.subOrgId === entityId);
-    scopedWarnings = scopedWarnings.filter(w => w.subOrgId === entityId);
+    scopedFarmers = scopedFarmers.filter((f) => f.subOrgId === entityId);
+    scopedMeters = scopedMeters.filter((m) => m.subOrgId === entityId);
+    scopedWarnings = scopedWarnings.filter((w) => w.subOrgId === entityId);
   }
 
   // Apply map filter
   let mapFilteredFarmers = [...scopedFarmers];
   let mapFilteredMeters = [...scopedMeters];
 
-  if (isAdmin && selectedOrgFilter !== 'ALL') {
-    mapFilteredFarmers = mapFilteredFarmers.filter(f => f.orgId === selectedOrgFilter);
-    mapFilteredMeters = mapFilteredMeters.filter(m => m.orgId === selectedOrgFilter);
-  } else if (isOrg && selectedSubFilter !== 'ALL') {
-    mapFilteredFarmers = mapFilteredFarmers.filter(f => f.subOrgId === selectedSubFilter);
-    mapFilteredMeters = mapFilteredMeters.filter(m => m.subOrgId === selectedSubFilter);
+  if (isAdmin && selectedOrgFilter !== "ALL") {
+    mapFilteredFarmers = mapFilteredFarmers.filter(
+      (f) => f.orgId === selectedOrgFilter,
+    );
+    mapFilteredMeters = mapFilteredMeters.filter(
+      (m) => m.orgId === selectedOrgFilter,
+    );
+  } else if (isOrg && selectedSubFilter !== "ALL") {
+    mapFilteredFarmers = mapFilteredFarmers.filter(
+      (f) => f.subOrgId === selectedSubFilter,
+    );
+    mapFilteredMeters = mapFilteredMeters.filter(
+      (m) => m.subOrgId === selectedSubFilter,
+    );
   }
 
-  const activeFarmersCount = mapFilteredFarmers.filter(f => f.status === 'Active').length;
+  const activeFarmersCount = mapFilteredFarmers.filter(
+    (f) => f.status === "Active",
+  ).length;
 
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Intelligence Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1.5 font-medium">Unified view of your agricultural network & telemetry data.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Intelligence Dashboard
+          </h1>
+          <p className="text-gray-500 text-sm mt-1.5 font-medium">
+            Unified view of your agricultural network & telemetry data.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {isAdmin && (
@@ -74,8 +83,10 @@ export default function DashboardPage({ onNavigate }) {
               className="border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-brand-blue outline-none focus:ring-2 focus:ring-brand-blue/20 bg-white shadow-sm cursor-pointer"
             >
               <option value="ALL">All Organizations</option>
-              {organizations.map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
+              {organizations.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
               ))}
             </select>
           )}
@@ -87,9 +98,13 @@ export default function DashboardPage({ onNavigate }) {
               className="border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-brand-blue outline-none focus:ring-2 focus:ring-brand-blue/20 bg-white shadow-sm cursor-pointer"
             >
               <option value="ALL">All Wards / Units</option>
-              {subOrganizations.filter(s => s.orgId === entityId).map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
+              {subOrganizations
+                .filter((s) => s.orgId === entityId)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
           )}
 
@@ -106,10 +121,18 @@ export default function DashboardPage({ onNavigate }) {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {isAdmin && (
-          <div className="glass-panel p-6 rounded-2xl shadow-xs border border-gray-100 flex justify-between items-start">
+          <div className="glass-panel relative p-6 rounded-2xl shadow-xs border border-gray-100 flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Organizations</p>
-              <p className="text-3xl font-black text-brand-blue mt-1">{organizations.length}</p>
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <span>Organizations</span>
+                <InfoTooltip
+                  className="absolute top-1 right-1"
+                  text="The number of parent organizations available in your current administrative scope."
+                />
+              </div>
+              <p className="text-3xl font-black text-brand-blue mt-1">
+                {organizations.length}
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-brand-blue">
               <Building2 className="w-6 h-6" />
@@ -118,11 +141,19 @@ export default function DashboardPage({ onNavigate }) {
         )}
 
         {!isSubOrg && (
-          <div className="glass-panel p-6 rounded-2xl shadow-xs border border-gray-100 flex justify-between items-start">
+          <div className="glass-panel relative p-6 rounded-2xl shadow-xs border border-gray-100 flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sub-Orgs / Wards</p>
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <span>Sub-Orgs / Wards</span>
+                <InfoTooltip
+                  className="absolute top-1 right-1"
+                  text="The number of subordinate organizations or ward units within your current scope."
+                />
+              </div>
               <p className="text-3xl font-black text-purple-600 mt-1">
-                {isOrg ? subOrganizations.filter(s => s.orgId === entityId).length : subOrganizations.length}
+                {isOrg
+                  ? subOrganizations.filter((s) => s.orgId === entityId).length
+                  : subOrganizations.length}
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
@@ -131,12 +162,20 @@ export default function DashboardPage({ onNavigate }) {
           </div>
         )}
 
-        <div className="bg-gradient-to-br from-brand-green to-teal-700 p-6 rounded-2xl text-white shadow-lg">
+        <div className="relative bg-gradient-to-br from-brand-green to-teal-700 p-6 rounded-2xl text-white shadow-lg">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-green-100 uppercase tracking-wider">Farmers Network</p>
+              <div className="flex items-center gap-2 text-xs font-bold text-green-100 uppercase tracking-wider">
+                <span>Farmers Network</span>
+                <InfoTooltip
+                  className="absolute top-1 right-1"
+                  text="The total number of farmers currently included in the selected organization or ward view."
+                />
+              </div>
               <div className="flex items-baseline gap-2 mt-1">
-                <p className="text-3xl font-black">{mapFilteredFarmers.length}</p>
+                <p className="text-3xl font-black">
+                  {mapFilteredFarmers.length}
+                </p>
                 <p className="text-xs font-medium text-green-100">Total</p>
               </div>
             </div>
@@ -155,11 +194,19 @@ export default function DashboardPage({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-brand-blue to-indigo-800 p-6 rounded-2xl text-white shadow-lg">
+        <div className="relative bg-gradient-to-br from-brand-blue to-indigo-800 p-6 rounded-2xl text-white shadow-lg">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-blue-100 uppercase tracking-wider">IoT Telemetry (GPKM)</p>
-              <p className="text-3xl font-black mt-1">{mapFilteredMeters.length}</p>
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-100 uppercase tracking-wider">
+                <span>IoT Telemetry (GPKM)</span>
+                <InfoTooltip
+                  className="absolute top-1 right-1"
+                  text="The number of GPKM smart meters connected to the selected organization or ward view."
+                />
+              </div>
+              <p className="text-3xl font-black mt-1">
+                {mapFilteredMeters.length}
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
               <Radio className="w-6 h-6" />
@@ -174,7 +221,11 @@ export default function DashboardPage({ onNavigate }) {
 
       {/* Live Warnings Banner */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-red-50/70 flex justify-between items-center">
+        <div className="relative px-6 py-4 border-b border-gray-100 bg-red-50/70 flex justify-between items-center">
+          <InfoTooltip
+            className="absolute top-1 right-1"
+            text="The number of active warnings that need attention in your current agricultural network."
+          />
           <h3 className="font-bold text-red-700 text-sm flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />
             <span>Live Actionable Warnings ({scopedWarnings.length})</span>
@@ -183,20 +234,35 @@ export default function DashboardPage({ onNavigate }) {
         <div className="divide-y divide-gray-50">
           {scopedWarnings.length > 0 ? (
             scopedWarnings.map((w) => (
-              <div key={w.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-gray-50/80 transition gap-4">
+              <div
+                key={w.id}
+                className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-gray-50/80 transition gap-4"
+              >
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold ${
-                    w.type === 'Critical' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
-                  }`}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold ${
+                      w.type === "Critical"
+                        ? "bg-red-100 text-red-600"
+                        : "bg-amber-100 text-amber-600"
+                    }`}
+                  >
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-800 text-sm">{w.message}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Source: <span className="font-bold text-gray-700">{w.source}</span> • {w.time}</p>
+                    <p className="font-bold text-gray-800 text-sm">
+                      {w.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Source:{" "}
+                      <span className="font-bold text-gray-700">
+                        {w.source}
+                      </span>{" "}
+                      • {w.time}
+                    </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => onNavigate('messages')}
+                  onClick={() => onNavigate("messages")}
                   className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -221,15 +287,21 @@ export default function DashboardPage({ onNavigate }) {
           </h3>
           <div className="flex gap-4 text-xs font-bold text-gray-600">
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-brand-green"></span> Farms ({mapFilteredFarmers.length})
+              <span className="w-3 h-3 rounded-full bg-brand-green"></span>{" "}
+              Farms ({mapFilteredFarmers.length})
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-brand-blue"></span> GPKM Meters ({mapFilteredMeters.length})
+              <span className="w-3 h-3 rounded-full bg-brand-blue"></span> GPKM
+              Meters ({mapFilteredMeters.length})
             </span>
           </div>
         </div>
         <div className="p-2">
-          <LeafletMap meters={mapFilteredMeters} farmers={mapFilteredFarmers} height="400px" />
+          <LeafletMap
+            meters={mapFilteredMeters}
+            farmers={mapFilteredFarmers}
+            height="400px"
+          />
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { Doughnut, Line } from 'react-chartjs-2';
 import L from 'leaflet';
+import InfoTooltip from '../components/common/InfoTooltip';
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -86,13 +87,16 @@ export default function FieldInsightsPage({ onNavigate, onSelectField }) {
         <div className="space-y-5 animate-fadeIn">
 
             {/* Geo Distribution Map */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-700">Geo Distribution</span>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                        <span>Geo Distribution</span>
+                        <InfoTooltip className="absolute top-1 right-1" text="The map shows the geographic locations associated with farmers in the field network." />
+                    </div>
                     <div className="flex items-center gap-2">
                         <input type="text" placeholder="Enter address"
                             className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs w-52 outline-none focus:border-blue-400" />
-                        <button className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 text-sm">✕</button>
+                        {/* <button className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 text-sm">✕</button> */}
                     </div>
                 </div>
                 <div ref={geoMapRef} style={{ height: '280px', width: '100%' }} />
@@ -100,8 +104,11 @@ export default function FieldInsightsPage({ onNavigate, onSelectField }) {
 
             {/* Middle Row: Donut + Total HA */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-700 mb-4">Lands Plotted by Crop</p>
+                <div className="relative bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-4">
+                        <span>Lands Plotted by Crop</span>
+                        <InfoTooltip className="absolute top-1 right-1" text="The chart shows how many registered plots belong to each crop type." />
+                    </div>
                     <div className="flex items-center gap-5">
                         <div className="relative flex-shrink-0" style={{ width: 160, height: 160 }}>
                             <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } }} />
@@ -121,9 +128,12 @@ export default function FieldInsightsPage({ onNavigate, onSelectField }) {
                     </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                <div className="relative bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
                     <div className="flex justify-between items-start">
-                        <p className="text-xs font-semibold text-gray-700">Total Lands Plotted</p>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                            <span>Total Lands Plotted</span>
+                            <InfoTooltip className="absolute top-1 right-1" text="The total recorded area of all registered plots, measured in hectares (HA)." />
+                        </div>
                         <select className="border border-gray-200 rounded px-2 py-1 text-xs text-gray-600 outline-none cursor-pointer">
                             <option>Daily</option><option>Weekly</option><option>Monthly</option><option>Yearly</option>
                         </select>
@@ -139,9 +149,12 @@ export default function FieldInsightsPage({ onNavigate, onSelectField }) {
             </div>
 
             {/* Lands Addition Timeline */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="relative bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
-                    <p className="text-xs font-semibold text-gray-700">Lands Addition</p>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                        <span>Lands Addition</span>
+                        <InfoTooltip className="absolute top-1 right-1" text="The timeline shows how much new land area was added to the registry over time." />
+                    </div>
                     <div className="flex gap-1">
                         {['Daily', 'Weekly', 'Monthly', 'Yearly'].map(tab => (
                             <button key={tab} onClick={() => setActiveTimeTab(tab)}
@@ -157,10 +170,13 @@ export default function FieldInsightsPage({ onNavigate, onSelectField }) {
             </div>
 
             {/* Farms List */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                    <h2 className="text-[18px] font-bold text-gray-800">Lands plotted</h2>
-                    <button className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xl leading-none">×</button>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-[18px] font-bold text-gray-800">Lands plotted</h2>
+                        <InfoTooltip className="absolute top-1 right-1" text="This table lists the individual plots included in the field registry." />
+                    </div>
+                    {/* <button className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xl leading-none">×</button> */}
                 </div>
 
                 <div className="flex items-center gap-3 px-3 py-3 border-b border-gray-200 bg-gray-50">

@@ -15,7 +15,7 @@ import {
   Sprout 
 } from 'lucide-react';
 
-export default function FarmerDetailPage({ farmerId, onNavigate, onSelectField }) {
+export default function FarmerDetailPage({ farmerId, onNavigate, onSelectField, onOpenActivity }) {
   const { farmers, fields } = useData();
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
@@ -187,7 +187,9 @@ export default function FarmerDetailPage({ farmerId, onNavigate, onSelectField }
                     <span>Total Number of Training Attended:</span>
                     <span className="font-bold text-gray-900 flex items-center gap-1.5">
                       {activities.trainingsAttended}
-                      <Eye className="w-3.5 h-3.5 text-gray-400" />
+                      <button type="button" onClick={() => onOpenActivity('trainings')} aria-label="View training records" className="text-gray-400 hover:text-brand-blue transition">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -198,14 +200,16 @@ export default function FarmerDetailPage({ farmerId, onNavigate, onSelectField }
                     <span>Total Number Articles Read:</span>
                     <span className="font-bold text-gray-900 flex items-center gap-1.5">
                       {activities.articlesRead}
-                      <Eye className="w-3.5 h-3.5 text-gray-400" />
+                      <button type="button" onClick={() => onOpenActivity('articles')} aria-label="View article records" className="text-gray-400 hover:text-brand-blue transition">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total Number of Quiz Participation:</span>
                     <span className="font-bold text-gray-900 flex items-center gap-1.5">
                       {activities.quizParticipation}
-                      <Eye className="w-3.5 h-3.5 text-gray-400" />
+                      {/* <Eye className="w-3.5 h-3.5 text-gray-400" /> */}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -218,11 +222,21 @@ export default function FarmerDetailPage({ farmerId, onNavigate, onSelectField }
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total Disease Detection:</span>
-                    <span className="font-bold text-gray-900">{activities.diseaseDetection}</span>
+                    <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                      {activities.diseaseDetection}
+                      <button type="button" onClick={() => onOpenActivity('disease')} aria-label="View disease detection records" className="text-gray-400 hover:text-brand-blue transition">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total Community Post:</span>
-                    <span className="font-bold text-gray-900">{activities.communityPost}</span>
+                    <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                      {activities.communityPost}
+                      <button type="button" onClick={() => onOpenActivity('community')} aria-label="View community post records" className="text-gray-400 hover:text-brand-blue transition">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total Community Comments:</span>

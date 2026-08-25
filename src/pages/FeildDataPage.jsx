@@ -14,6 +14,7 @@ import {
   Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import InfoTooltip from '../components/common/InfoTooltip';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, ChartLegend, Filler);
 
@@ -104,9 +105,12 @@ export default function FieldDataPage({ fieldId, onNavigate }) {
 
   return (
     <div className="space-y-5 bg-[#eef1f3] p-0 text-gray-700">
-      <div className="rounded-xl bg-white border border-gray-200 overflow-hidden">
+      <div className="relative rounded-xl bg-white border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <div className="text-lg font-semibold">Data Observation</div>
+          <div className="flex items-center gap-2 text-lg font-semibold">
+            <span>Data Observation</span>
+            <InfoTooltip className="absolute top-1 right-1" text="Historical vegetation-index readings for this field. Select an index and chart point to inspect a date." />
+          </div>
         </div>
         <div className="p-4">
           <div className="flex justify-between text-xs text-gray-500 mb-2">
@@ -131,9 +135,12 @@ export default function FieldDataPage({ fieldId, onNavigate }) {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white border border-gray-200 overflow-hidden">
+      <div className="relative rounded-xl bg-white border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <div className="text-xl font-bold">Remote Monitoring</div>
+          <div className="flex items-center gap-2 text-xl font-bold">
+            <span>Remote Monitoring</span>
+            <InfoTooltip className="absolute top-1 right-1" text="Satellite-based monitoring layers that help assess vegetation health and field moisture." />
+          </div>
           <button className="text-gray-500">⌄</button>
         </div>
         <div className="p-4">
@@ -167,9 +174,12 @@ export default function FieldDataPage({ fieldId, onNavigate }) {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white border border-gray-200 overflow-hidden">
+      <div className="relative rounded-xl bg-white border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <div className="text-xl font-bold">Weather Monitoring</div>
+          <div className="flex items-center gap-2 text-xl font-bold">
+            <span>Weather Monitoring</span>
+            <InfoTooltip className="absolute top-1 right-1" text="Weather trends for the field area, including temperature, humidity, and precipitation." />
+          </div>
           <button className="text-gray-500">⌄</button>
         </div>
         <div className="p-4">

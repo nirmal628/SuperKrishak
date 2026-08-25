@@ -16,6 +16,7 @@ import {
 import Modal from '../components/common/Modal';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut, Pie } from 'react-chartjs-2';
+import InfoTooltip from '../components/common/InfoTooltip';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -154,9 +155,12 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
       {/* Analytics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* KPI Box */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col justify-between">
+        <div className="relative bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Registered</p>
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <span>Total Registered</span>
+              <InfoTooltip className="absolute top-1 right-1" text="The total number of farmer records currently visible after applying your access scope and filters." />
+            </div>
             <p className="text-4xl font-black text-gray-900 mt-2">{scopedFarmers.length}</p>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
@@ -172,16 +176,22 @@ export default function FarmersNetworkPage({ onNavigate, onSelectFarmer }) {
         </div>
 
         {/* Gender Breakdown Chart */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Gender Demographics</p>
+        <div className="relative bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <span>Gender Demographics</span>
+            <InfoTooltip className="absolute top-1 right-1" text="The visible farmer records grouped by their recorded gender." />
+          </div>
           <div className="h-44 relative">
             <Doughnut data={genderChartData} options={chartOptions} />
           </div>
         </div>
 
         {/* Farming Type Chart */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Farming Class Distribution</p>
+        <div className="relative bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <span>Farming Class Distribution</span>
+            <InfoTooltip className="absolute top-1 right-1" text="The visible farmer records grouped by farming class, such as crops, livestock, or fisheries." />
+          </div>
           <div className="h-44 relative">
             <Pie data={farmingTypeChartData} options={{ ...chartOptions, cutout: '0%' }} />
           </div>

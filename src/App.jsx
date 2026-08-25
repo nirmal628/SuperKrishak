@@ -20,6 +20,7 @@ import IoTDetailPage from './pages/IoTDetailPage';
 import CommunicationPage from './pages/CommunicationPage';
 import AccessControlPage from './pages/AccessControlPage';
 import FieldDataPage from './pages/FeildDataPage';
+import FarmerActivityPage from './pages/FarmerActivityPage';
 
 function MainApp() {
   const { isLoggedIn, role } = useAuth();
@@ -28,6 +29,7 @@ function MainApp() {
   const [selectedFarmerId, setSelectedFarmerId] = useState(null);
   const [selectedFieldId, setSelectedFieldId] = useState(null);
   const [selectedMeterId, setSelectedMeterId] = useState(null);
+  const [selectedActivityType, setSelectedActivityType] = useState(null);
 
   if (!isLoggedIn) {
     return <LoginPage />;
@@ -71,6 +73,18 @@ function MainApp() {
             farmerId={selectedFarmerId} 
             onNavigate={navigate}
             onSelectField={(id) => setSelectedFieldId(id)}
+            onOpenActivity={(activityType) => {
+              setSelectedActivityType(activityType);
+              navigate('farmer_activity');
+            }}
+          />
+        );
+      case 'farmer_activity':
+        return (
+          <FarmerActivityPage
+            farmerId={selectedFarmerId}
+            activityType={selectedActivityType}
+            onNavigate={navigate}
           />
         );
       case 'fields':
