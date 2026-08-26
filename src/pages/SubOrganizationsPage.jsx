@@ -45,6 +45,7 @@ export default function SubOrganizationsPage() {
     name: '',
     shortName: '',
     code: '',
+    skAdminId: '',
     address: '',
     email: '',
     password: ''
@@ -106,11 +107,12 @@ export default function SubOrganizationsPage() {
       name: newSubForm.name,
       shortName: newSubForm.shortName || newSubForm.name,
       code: newSubForm.code || Math.floor(1000 + Math.random() * 9000).toString(),
+      skAdminId: newSubForm.skAdminId,
       address: newSubForm.address,
       status: 'Active'
     });
     setIsAddModalOpen(false);
-    setNewSubForm({ orgId: organizations[0]?.id || '', name: '', shortName: '', code: '', address: '', email: '', password: '' });
+    setNewSubForm({ orgId: organizations[0]?.id || '', name: '', shortName: '', code: '', skAdminId: '', address: '', email: '', password: '' });
   };
 
   const handleEditSubmit = (e) => {
@@ -120,6 +122,7 @@ export default function SubOrganizationsPage() {
       name: editSub.name,
       shortName: editSub.shortName,
       code: editSub.code,
+      skAdminId: editSub.skAdminId,
       orgId: editSub.orgId,
       address: editSub.address,
       status: editSub.status
@@ -352,6 +355,28 @@ export default function SubOrganizationsPage() {
         subtitle="Create ward or sub-unit mapped to a parent organization."
       >
         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3.5 items-start">
+            <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
+                SK Admin Portal Integration ID *
+              </label>
+              <input
+                type="text"
+                required
+                value={newSubForm.skAdminId}
+                onChange={(e) => setNewSubForm({ ...newSubForm, skAdminId: e.target.value })}
+                placeholder="SK-SUB-XXXX"
+                className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
+              />
+              <p className="text-[10px] text-blue-600 mt-1 font-medium">
+                This ID hooks into the central database to automatically import and synchronize farmer records.
+              </p>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Parent Organization *</label>
             <select
@@ -472,6 +497,28 @@ export default function SubOrganizationsPage() {
           subtitle="Update unit parameters."
         >
           <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3.5 items-start">
+              <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
+                  SK Admin Portal Integration ID *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editSub.skAdminId || ''}
+                  onChange={(e) => setEditSub({ ...editSub, skAdminId: e.target.value })}
+                  placeholder="SK-SUB-XXXX"
+                  className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
+                />
+                <p className="text-[10px] text-blue-600 mt-1 font-medium">
+                  Update the ID used to synchronize this sub-organization with the central database.
+                </p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Parent Organization</label>
               <select
