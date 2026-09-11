@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
+import { 
+  Cpu, 
+  Gauge, 
+  AlertTriangle, 
+  Plus, 
+  Eye, 
+  List, 
+  Map, 
+  Search, 
+  Filter,
+  Phone,
+  MapPin
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { 
-  Plus, 
-  Eye,
-  List,
-  Map,
-  Search,
-  Filter
-} from 'lucide-react';
 import Modal from '../components/common/Modal';
 import LeafletMap from '../components/widgets/LeafletMap';
 import 'leaflet/dist/leaflet.css';
 
 export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
   const { isAdmin, isOrg, isSubOrg, entityId } = useAuth();
-  const { gpkm, organizations, subOrganizations, addMeter, showToast } = useData();
+  const { 
+    gpkm = [], 
+    organizations = [], 
+    subOrganizations = [], 
+    farmers = [],
+    addMeter, 
+    showToast 
+  } = useData();
 
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [configMeter, setConfigMeter] = useState(null);
-  const [viewMode, setViewMode] = useState('map');
+  const [viewMode, setViewMode] = useState('list');
   const [search, setSearch] = useState('');
 
-  // New meter form
+  // New meter form state
   const [newMeter, setNewMeter] = useState({
     aepcId: '',
     name: '',
@@ -30,13 +42,43 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
     subOrgId: subOrganizations[0]?.id || ''
   });
 
-  // Scoped meters
+  // Scoped meters calculation
   let scopedMeters = [...gpkm];
   if (isOrg) scopedMeters = scopedMeters.filter(m => m.orgId === entityId);
   if (isSubOrg) scopedMeters = scopedMeters.filter(m => m.subOrgId === entityId);
-  const filteredMeters = scopedMeters.filter(m => `${m.name} ${m.aepcId}`.toLowerCase().includes(search.toLowerCase()));
+
+  const filteredMeters = scopedMeters.filter(m => 
+    `${m.name || ''} ${m.aepcId || ''} ${m.farmerName || ''}`.toLowerCase().includes(search.toLowerCase())
+  );
   const activeMeters = scopedMeters.filter(m => m.status === 'Active').length;
   const attentionMeters = scopedMeters.filter(m => m.status !== 'Active').length;
+
+  const stats = [
+    {
+      label: 'TOTAL METERS',
+      value: scopedMeters.length,
+      textColor: 'text-gray-900',
+      Icon: Cpu,
+      iconBg: 'bg-gray-100',
+      iconColor: 'text-gray-700'
+    },
+    {
+      label: 'ACTIVE DEVICES',
+      value: activeMeters,
+      textColor: 'text-green-500',
+      Icon: Gauge,
+      iconBg: 'bg-gray-100',
+      iconColor: 'text-gray-700'
+    },
+    {
+      label: 'ATTENTION REQUIRED',
+      value: attentionMeters,
+      textColor: 'text-gray-400',
+      Icon: AlertTriangle,
+      iconBg: 'bg-yellow-50',
+      iconColor: 'text-amber-600'
+    }
+  ];
 
   const handleConnectSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +88,12 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
       subOrgId: isSubOrg ? entityId : newMeter.subOrgId
     });
     setIsConnectModalOpen(false);
-    setNewMeter({ aepcId: '', name: '', orgId: organizations[0]?.id || '', subOrgId: subOrganizations[0]?.id || '' });
+    setNewMeter({ 
+      aepcId: '', 
+      name: '', 
+      orgId: organizations[0]?.id || '', 
+      subOrgId: subOrganizations[0]?.id || '' 
+    });
   };
 
   const handleConfigSave = (e) => {
@@ -60,8 +107,8 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">IoT Telemetry (GPKM)</h1>
-          <p className="text-gray-500 text-sm mt-1.5 font-medium">Alternative Energy Promotion Center (AEPC) Smart Flow Sensors.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Krishi Meter</h1>
+          <p className="text-gray-500 text-sm mt-1.5 font-medium">Live Tracking of Sensor and Weather from your Field.</p>
         </div>
         {isAdmin && (
           <button
@@ -74,23 +121,25 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
         )}
       </div>
 
+      {/* Stats Section */}
       <div className="grid grid-cols-1 sm:grid-cols-3 border-y border-gray-200 py-7">
-        {[
-          ['TOTAL METERS', scopedMeters.length, 'text-gray-900'],
-          ['ACTIVE DEVICES', activeMeters, 'text-green-500'],
-          ['ATTENTION REQUIRED', attentionMeters, 'text-gray-400']
-        ].map(([label, value, color]) => (
-          <div key={label} className="flex items-center justify-between px-5 sm:px-8 border-b sm:border-b-0 sm:border-r last:border-0 border-gray-200 py-3 sm:py-0">
+        {stats.map(({ label, value, textColor, Icon, iconBg, iconColor }) => (
+          <div 
+            key={label} 
+            className="flex items-center gap-4 px-5 sm:px-8 border-b sm:border-b-0 sm:border-r last:border-0 border-gray-200 py-3 sm:py-0"
+          >
+            <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+            </div>
             <div>
               <p className="text-[10px] font-bold tracking-widest text-gray-500">{label}</p>
-              <p className={`text-2xl font-black mt-1 ${color}`}>{value}</p>
+              <p className={`text-2xl font-black mt-1 ${textColor}`}>{value}</p>
             </div>
-            <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm">⌁</span>
           </div>
         ))}
       </div>
 
-      {/* Map/List workspace */}
+      {/* Map/List Workspace */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-gray-200 flex flex-col lg:flex-row gap-3 justify-between">
           <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
@@ -98,7 +147,11 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
               ['map', Map, 'Map View'],
               ['list', List, 'List View']
             ].map(([mode, Icon, label]) => (
-              <button key={mode} onClick={() => setViewMode(mode)} className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${viewMode === mode ? 'bg-brand-green text-white shadow-sm' : 'text-gray-600 hover:bg-white'}`}>
+              <button 
+                key={mode} 
+                onClick={() => setViewMode(mode)} 
+                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${viewMode === mode ? 'bg-brand-green text-white shadow-sm' : 'text-gray-600 hover:bg-white'}`}
+              >
                 <Icon className="w-3.5 h-3.5" />{label}
               </button>
             ))}
@@ -106,9 +159,16 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
           <div className="flex gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by Meter ID or Name..." className="w-full sm:w-72 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-brand-blue" />
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                placeholder="Search by Meter ID or Name..." 
+                className="w-full sm:w-72 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-brand-blue" 
+              />
             </div>
-            <button className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-2"><Filter className="w-3.5 h-3.5" />Filters</button>
+            <button className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5" />Filters
+            </button>
           </div>
         </div>
 
@@ -132,24 +192,84 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider">
-                <tr><th className="px-5 py-3">Meter ID</th><th className="px-5 py-3">Assigned Organization</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Last Sync</th><th className="px-5 py-3 text-right">Actions</th></tr>
+            <table className="w-full text-left text-xs whitespace-nowrap">
+              <thead className="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">List No.</th>
+                  <th className="px-6 py-4">Farmer Details</th>
+                  <th className="px-6 py-4">Meter Details</th>
+                  <th className="px-6 py-4">Activity Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
               </thead>
-              <tbody>
-                {filteredMeters.map(meter => {
-                  const org = organizations.find(o => o.id === meter.orgId);
-                  return <tr key={meter.id} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-5 py-4 font-mono font-bold text-gray-800">{meter.aepcId}</td>
-                    <td className="px-5 py-4 text-gray-700">{org?.shortName || org?.name || 'Unassigned'}</td>
-                    <td className="px-5 py-4"><span className="px-2 py-1 rounded-full bg-green-50 text-brand-green border border-green-200 font-bold">{meter.status}</span></td>
-                    <td className="px-5 py-4 text-gray-500">{meter.installedDate || 'Today'}</td>
-                    <td className="px-5 py-4 text-right"><button title="View meter details" onClick={() => { onSelectMeter(meter.id); onNavigate('gpkm_detail'); }} className="p-2 text-gray-500 hover:text-brand-blue hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4" /></button></td>
-                  </tr>;
+              <tbody className="divide-y divide-gray-100">
+                {filteredMeters.map((meter, index) => {
+                  const farmer = farmers.find(f => f.id === meter.farmerId);
+
+                  // Extracting farmer name, location, and phone with fallback to meter properties
+                  const farmerName = farmer?.name || meter.farmerName || 'Unassigned';
+                  const location = meter.locationName || farmer?.location || farmer?.address || 'N/A';
+                  const phone = meter.phone || farmer?.mobile || farmer?.phone || 'N/A';
+                  const isActive = meter.status === 'Active';
+
+                  return (
+                    <tr key={meter.id} className="hover:bg-gray-50/60 transition">
+                      {/* List No. */}
+                      <td className="px-6 py-4 font-bold text-gray-900 text-sm">
+                        {index + 1}
+                      </td>
+
+                      {/* Farmer Details (Name + Location + Phone) */}
+                      <td className="px-6 py-4">
+                        <div className="font-extrabold text-gray-900 text-sm">{farmerName}</div>
+                        <div className="flex items-center gap-1.5 text-gray-400 mt-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span>{location}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-500 font-medium mt-0.5">
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
+                          <span>{phone}</span>
+                        </div>
+                      </td>
+
+                      {/* Meter Details */}
+                      <td className="px-6 py-4">
+                        <div className="font-mono font-bold text-gray-900 text-sm">{meter.aepcId || meter.id}</div>
+                      </td>
+
+                      {/* Activity Status */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                          <span className="font-bold text-gray-900 text-sm">
+                            {meter.status || 'Inactive'}
+                          </span>
+                        </div>
+                        {meter.lastActiveTime && (
+                          <div className="text-gray-400 text-[11px] font-medium mt-0.5 pl-4">
+                            {meter.lastActiveTime}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          title="View meter details" 
+                          onClick={() => { onSelectMeter(meter.id); onNavigate('gpkm_detail'); }} 
+                          className="p-2 text-gray-400 hover:text-brand-blue hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
                 })}
               </tbody>
             </table>
-            {filteredMeters.length === 0 && <div className="p-12 text-center text-gray-400">No telemetry meters connected to your profile yet.</div>}
+            {filteredMeters.length === 0 && (
+              <div className="p-12 text-center text-gray-400">No telemetry meters connected to your profile yet.</div>
+            )}
           </div>
         )}
       </div>

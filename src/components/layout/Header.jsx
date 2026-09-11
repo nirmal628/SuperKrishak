@@ -1,96 +1,46 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
-import { Home, ChevronRight, Bell, Building, Shield } from 'lucide-react';
+import { Home, ChevronRight, User, ChevronDown, Globe } from 'lucide-react';
 
 export default function Header({ currentRoute, detailParam, onNavigate }) {
-  const { role, currentUser, isAdmin, switchDemoRole } = useAuth();
-  const { organizations, subOrganizations, warnings } = useData();
+  const { role, currentUser, isAdmin } = useAuth();
+  const { t, i18n } = useTranslation();
 
-  // Find entity name if restricted view
-  let entityScopeName = 'Global';
-  if (role === 'ORG') {
-    entityScopeName = organizations.find(o => o.id === currentUser?.entityId)?.name || 'Parent Organization';
-  } else if (role === 'SUBORG') {
-    entityScopeName = subOrganizations.find(s => s.id === currentUser?.entityId)?.name || 'Ward Unit';
-  }
-
-  // Format breadcrumb title
   const getBreadcrumbTitle = (route) => {
-    switch(route) {
-      case 'dashboard': return 'Dashboard';
-      case 'organizations': return 'Organizations';
-      case 'organization_detail': return 'Organization Breakdown & Users';
-      case 'sub-organizations': return 'Sub-Organizations';
-      case 'farmers': return 'Farmers Network';
-      case 'farmer_detail': return 'Farmer Detail';
-      case 'fields': return 'Field Insights';
-      case 'field_monitor': return 'Satellite Monitoring (PRO)';
-      case 'gpkm': return 'IoT Telemetry (GPKM)';
-      case 'gpkm_detail': return 'Live Telemetry Dashboard';
-      case 'messages': return 'Communication';
-      case 'access': return 'Access Control';
-      default: return 'Dashboard';
-    }
+    const titles = {
+      dashboard: t('Dashboard'), organizations: t('Organizations'), organization_detail: t('Organization Breakdown & Users'),
+      'sub-organizations': t('Sub-Organizations'), farmers: t('Farmers Network'), farmer_detail: t('Farmer Detail'),
+      farmer_leaderboard: t('User Rankings'), farmer_activity: t('Farmer Activity'), fields: t('Field Insights'),
+      field_monitor: t('Satellite Monitoring (PRO)'), field_data: t('Field Data'), gpkm: t('IoT Telemetry (GPKM)'),
+      gpkm_detail: t('Live Telemetry Dashboard'), messages: t('Communication'), access: t('Access Control'),
+    };
+    return titles[route] || t('Dashboard');
   };
-
-  const isDetailPage = currentRoute.includes('_detail') || currentRoute.includes('_monitor');
+  const isSubPage = ['_detail', '_monitor', '_leaderboard', '_activity', '_data'].some((suffix) => currentRoute.includes(suffix));
   const baseRoute = currentRoute.split('_')[0];
+  const getParentRoute = () => ({ farmer: 'farmers', field: 'fields', gpkm: 'gpkm', organization: 'organizations' }[baseRoute] || 'dashboard');
 
   return (
-    <header className="h-[72px] bg-white/85 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 z-10 sticky top-0">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-        <button 
-          onClick={() => onNavigate('dashboard')}
-          className="hover:text-brand-blue flex items-center gap-1.5 transition-colors text-gray-500"
-        >
+    <header className="min-h-[60px] lg:h-[72px] bg-[var(--color-background)] border-b border-[var(--color-border)] flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-2 z-10 sticky top-0">
+      <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm font-semibold text-[var(--color-text)]">
+        <button onClick={() => onNavigate('dashboard')} className={`hover:text-[var(--color-text)] flex items-center gap-1.5 transition-colors ${currentRoute === 'dashboard' ? 'text-[var(--color-primary)] font-bold' : 'text-[var(--color-muted)]'}`}>
           <Home className="w-4 h-4" />
-          <span>Dashboard</span>
+          <span className="hidden sm:inline">{t('Dashboard')}</span>
         </button>
-
-        {currentRoute !== 'dashboard' && (
-          <>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-            <button 
-              onClick={() => onNavigate(baseRoute === 'farmer' ? 'farmers' : (baseRoute === 'field' ? 'fields' : baseRoute))}
-              className={`hover:text-brand-blue transition-colors ${!isDetailPage ? 'text-brand-blue font-bold' : 'text-gray-500'}`}
-            >
-              {getBreadcrumbTitle(baseRoute === 'farmer' ? 'farmers' : (baseRoute === 'field' ? 'fields' : currentRoute))}
-            </button>
-          </>
-        )}
-
-        {isDetailPage && (
-          <>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-            <span className="text-brand-green font-bold flex items-center gap-1">
-              {getBreadcrumbTitle(currentRoute)}
-            </span>
-          </>
-        )}
+        {currentRoute !== 'dashboard' && !isSubPage && <><ChevronRight className="w-3.5 h-3.5 text-[var(--color-muted)]" /><span className="text-[var(--color-primary)] font-bold">{getBreadcrumbTitle(currentRoute)}</span></>}
+        {isSubPage && <><ChevronRight className="w-3.5 h-3.5 text-[var(--color-muted)]" /><button onClick={() => onNavigate(getParentRoute())} className="hover:text-[var(--color-text)] transition-colors text-[var(--color-muted)]">{getBreadcrumbTitle(getParentRoute())}</button><ChevronRight className="w-3.5 h-3.5 text-[var(--color-muted)]" /><span className="text-[var(--color-primary)] font-bold">{getBreadcrumbTitle(currentRoute)}</span></>}
       </div>
-
-      {/* Header Actions */}
       <div className="flex items-center gap-4">
-        {/* Scoped Entity Badge (For non-admin) */}
-        {!isAdmin && (
-          <span className="px-3 py-1.5 bg-blue-50 text-brand-blue rounded-lg text-xs font-bold border border-blue-100 flex items-center gap-1.5 max-w-[200px] truncate">
-            <Building className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{entityScopeName}</span>
-          </span>
-        )}
-
-        {/* Notifications */}
-        <button 
-          onClick={() => onNavigate('dashboard')}
-          className="relative w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition border border-gray-200 shadow-xs"
-          title="Actionable Warnings"
-        >
-          <Bell className="w-5 h-5" />
-          {warnings.length > 0 && (
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-          )}
+        <button type="button" className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[var(--color-text)] transition-colors hover:bg-[var(--color-mint)]" aria-label={t('User menu')}>
+          <span className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-sm ring-2 ring-[var(--color-border)] flex-shrink-0"><User className="w-4 h-4" /></span>
+          <div className="hidden sm:flex flex-col text-left max-w-[180px]"><span className="truncate text-sm font-bold leading-tight">{currentUser?.name || t('System User')}</span><span className="truncate text-[10px] text-[var(--color-muted)] font-semibold">{currentUser?.title || (isAdmin ? t('System Admin') : role)}</span></div>
+          <ChevronDown className="hidden sm:block w-4 h-4 text-[var(--color-muted)]" />
+        </button>
+        <span className="w-px h-6 bg-[var(--color-border)]" aria-hidden="true" />
+        <button onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'ne' : 'en')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-mint)] text-[var(--color-primary)] transition border border-[var(--color-border)] text-xs font-bold shadow-xs" title={t('Switch language')}>
+          <Globe className="w-4 h-4 text-[var(--color-primary)]" />
+          <span>{i18n.language === 'en' ? t('English') : t('Nepali')}</span>
         </button>
       </div>
     </header>

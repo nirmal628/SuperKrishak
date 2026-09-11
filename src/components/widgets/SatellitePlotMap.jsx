@@ -12,9 +12,9 @@ export default function SatellitePlotMap({
   const polygonRef = useRef(null);
 
   const colors = {
-    'NDVI': '#2DA86E',
-    'NDMI': '#3B82F6',
-    'SAVI': '#F59E0B'
+    'NDVI': '#16A66A',
+    'NDMI': '#2684C6',
+    'SAVI': '#E5A62A'
   };
 
   useEffect(() => {
@@ -40,8 +40,8 @@ export default function SatellitePlotMap({
       ];
 
       const poly = L.polygon(latlngs, {
-        color: colors[activeType] || '#2DA86E',
-        fillColor: colors[activeType] || '#2DA86E',
+        color: colors[activeType] || '#16A66A',
+        fillColor: colors[activeType] || '#16A66A',
         fillOpacity: opacity,
         weight: 2.5
       }).addTo(map);
@@ -51,7 +51,7 @@ export default function SatellitePlotMap({
       mapInstanceRef.current = map;
     } else {
       if (polygonRef.current) {
-        const strokeColor = colors[activeType] || '#2DA86E';
+        const strokeColor = colors[activeType] || '#16A66A';
         polygonRef.current.setStyle({
           color: strokeColor,
           fillColor: strokeColor,

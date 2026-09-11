@@ -1,104 +1,145 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  GitMerge, 
-  Users, 
-  MapPin, 
-  Cpu, 
-  MessageSquare, 
-  ShieldCheck, 
+import React from "react";
+import { useTranslation } from "react-i18next";
+import logoImg from './frame.png'; // Adjust path/filename to match your project (e.g., './Frame 2608495.png')
+import { useAuth } from "../../context/AuthContext";
+import {
+  LayoutDashboard,
+  Building2,
+  GitMerge,
+  Users,
+  MapPin,
+  Cpu,
+  MessageSquare,
+  ShieldCheck,
   Power,
-  User
-} from 'lucide-react';
+} from "lucide-react";
 
 export default function Sidebar({ currentRoute, onNavigate }) {
-  const { currentUser, role, logout, isAdmin } = useAuth();
-  const { accessControl } = useData();
+  const { role, logout } = useAuth();
+  const { t } = useTranslation();
 
   const routes = [
-    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'ORG', 'SUBORG'] },
-    { id: 'organizations', name: 'Organizations', icon: Building2, roles: ['ADMIN'] },
-    { id: 'sub-organizations', name: 'Sub-Organizations', icon: GitMerge, roles: ['ADMIN'] },
-    { id: 'farmers', name: 'Farmers Network', icon: Users, roles: ['ADMIN', 'ORG', 'SUBORG'] },
-    { id: 'fields', name: 'Field Insights', icon: MapPin, roles: ['ADMIN', 'ORG', 'SUBORG'] },
-    { id: 'gpkm', name: 'IoT Telemetry (GPKM)', icon: Cpu, roles: ['ADMIN', 'ORG', 'SUBORG'] },
-    { id: 'messages', name: 'Communication', icon: MessageSquare, roles: ['ADMIN', 'ORG', 'SUBORG'] },
-    { id: 'access', name: 'Access Control', icon: ShieldCheck, roles: ['ADMIN'] }
+    {
+      id: "dashboard",
+      name: t("Dashboard"),
+      icon: LayoutDashboard,
+      roles: ["ADMIN", "ORG", "SUBORG"],
+    },
+    {
+      id: "organizations",
+      name: t("Organizations"),
+      icon: Building2,
+      roles: ["ADMIN"],
+    },
+    {
+      id: "sub-organizations",
+      name: t("Sub-Organizations"),
+      icon: GitMerge,
+      roles: ["ADMIN"],
+    },
+    {
+      id: "farmers",
+      name: t("Farmers Network"),
+      icon: Users,
+      roles: ["ADMIN", "ORG", "SUBORG"],
+    },
+    {
+      id: "fields",
+      name: t("Farms"),
+      icon: MapPin,
+      roles: ["ADMIN", "ORG", "SUBORG"],
+    },
+    {
+      id: "gpkm",
+      name: t("Krishi Meter"),
+      icon: Cpu,
+      roles: ["ADMIN", "ORG", "SUBORG"],
+    },
+    {
+      id: "messages",
+      name: t("Communication"),
+      icon: MessageSquare,
+      roles: ["ADMIN", "ORG", "SUBORG"],
+    },
+    {
+      id: "access",
+      name: t("Access Control"),
+      icon: ShieldCheck,
+      roles: ["ADMIN"],
+    },
   ];
 
-  // Filter routes based on user role and permissions
-  const visibleRoutes = routes.filter(r => {
-    if (!r.roles.includes(role)) return false;
-    if (r.id === 'messages' && role !== 'ADMIN') {
-      const allowed = accessControl.sendMessage[currentUser?.entityId];
-      if (!allowed) return false;
-    }
-    return true;
-  });
+  // Filter routes based on user role
+  const visibleRoutes = routes.filter((r) => r.roles.includes(role));
+  const dashboardRoute = visibleRoutes.find((r) => r.id === "dashboard");
+  const sections = [
+    { label: t("NETWORK"), routeIds: ["organizations", "sub-organizations", "farmers"] },
+    { label: t("FIELD OPS"), routeIds: ["fields", "gpkm"] },
+    { label: t("SYSTEM"), routeIds: ["messages", "access"] },
+  ];
+
+  const renderNavItem = (r) => {
+    const Icon = r.icon;
+    const isActive = currentRoute === r.id;
+
+    return (
+      <button
+        key={r.id}
+        onClick={() => onNavigate(r.id)}
+        className={`w-auto lg:w-full flex flex-shrink-0 items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm font-semibold transition-all ${
+          isActive
+            ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-active)] border-l-[3px] border-[var(--sidebar-active-border)] rounded-r-lg font-bold shadow-xs"
+            : "text-[var(--sidebar-text)] rounded-xl hover:bg-[rgba(255,255,255,0.04)]"
+        }`}
+      >
+        <Icon
+          className={`w-5 h-5 ${
+            isActive ? "text-[var(--color-secondary)]" : "opacity-70"
+          }`}
+        />
+        <span>{r.name}</span>
+      </button>
+    );
+  };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <aside className="w-full lg:w-64 bg-[linear-gradient(180deg,var(--sidebar-gradient-start)_0%,var(--sidebar-gradient-end)_100%)] border-b lg:border-b-0 lg:border-r border-[#123847] flex flex-col flex-shrink-0 z-20 shadow-[0_4px_18px_rgba(11,37,51,0.12)] lg:shadow-[4px_0_24px_rgba(11,37,51,0.12)]">
       {/* Brand Header */}
-      <div className="h-[72px] flex items-center px-6 border-b border-gray-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center text-white font-black shadow-sm text-xs tracking-wider">
-            SK
-          </div>
-          <span className="font-extrabold text-gray-900 text-lg tracking-tight">
-            Super<span className="text-brand-green">Krishak</span>
-          </span>
-        </div>
-      </div>
-
-      {/* User Role Card */}
-      <div className="p-5 border-b border-gray-100 bg-gradient-to-br from-gray-50/80 to-white flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-brand-blue flex items-center justify-center text-white shadow-sm ring-2 ring-white flex-shrink-0">
-          <User className="w-5 h-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-gray-800 tracking-tight truncate">
-            {currentUser?.name || 'System User'}
-          </p>
-          <p className="text-[10px] uppercase font-bold text-brand-green tracking-wider mt-0.5 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-green pulse-dot"></span>
-            {currentUser?.title || 'Active Access'}
-          </p>
-        </div>
-      </div>
+{/* Brand Header */}
+<div className="h-[60px] lg:h-[72px] flex items-center px-4 lg:px-6 border-b border-[#123847]">
+  <img 
+    src={logoImg} 
+    alt="Super Krishak" 
+    className="h-10 lg:h-12 w-auto max-w-full object-contain" 
+  />
+</div>
 
       {/* Navigation List */}
-      <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-1.5">
-        {visibleRoutes.map((r) => {
-          const Icon = r.icon;
-          const isActive = currentRoute === r.id;
+      <nav className="flex flex-1 overflow-x-auto lg:overflow-y-auto lg:flex-col py-2 lg:py-5 px-3 gap-1.5 lg:space-y-1.5">
+        {dashboardRoute && renderNavItem(dashboardRoute)}
+        {sections.map((section) => {
+          const sectionRoutes = visibleRoutes.filter((r) => section.routeIds.includes(r.id));
+          if (sectionRoutes.length === 0) return null;
+
           return (
-            <button
-              key={r.id}
-              onClick={() => onNavigate(r.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? 'bg-[#F0F6FB] text-brand-blue border-r-4 border-brand-green font-bold shadow-xs'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-brand-blue'
-              }`}
-            >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-brand-blue' : 'text-gray-400'}`} />
-              <span>{r.name}</span>
-            </button>
+            <div key={section.label} className="flex flex-col flex-shrink-0 mt-6 mb-2 gap-1.5">
+              <p className="px-3 text-[11px] uppercase tracking-[0.05em] text-[var(--sidebar-section-label)]">
+                {section.label}
+              </p>
+              {sectionRoutes.map(renderNavItem)}
+            </div>
           );
         })}
       </nav>
 
       {/* Disconnect */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50/60">
+      <div className="hidden lg:block p-4 border-t border-[#123847] bg-[#123847]">
         <button
           onClick={logout}
-          className="flex items-center justify-center gap-2 text-gray-600 hover:text-red-600 hover:bg-red-50 font-semibold text-sm w-full px-4 py-2.5 rounded-xl transition-all border border-transparent hover:border-red-100"
+          className="flex items-center justify-center gap-2 text-[#A9BDC4] hover:text-white hover:bg-[#0B2533] font-semibold text-sm w-full px-4 py-2.5 rounded-lg transition-all border border-transparent"
         >
           <Power className="w-4 h-4" />
-          <span>Disconnect</span>
+          <span>{t("Logout")}</span>
         </button>
       </div>
     </aside>

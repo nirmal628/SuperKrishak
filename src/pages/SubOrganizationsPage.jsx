@@ -51,6 +51,34 @@ export default function SubOrganizationsPage() {
     password: ''
   });
 
+  // Handler to auto-fill fields when SK Admin ID is entered
+  const handleSkAdminIdChange = (e) => {
+    const value = e.target.value;
+
+    // Check if entered ID matches existing sub-org data (or replace with your API fetch)
+    const matchedData = subOrganizations.find(s => s.skAdminId === value);
+
+    if (matchedData) {
+      setNewSubForm(prev => ({
+        ...prev,
+        skAdminId: value,
+        orgId: matchedData.orgId || prev.orgId,
+        name: matchedData.name || '',
+        shortName: matchedData.shortName || '',
+        address: matchedData.address || ''
+      }));
+    } else {
+      // Keep ID updated and allow manual entry / clear auto-filled values
+      setNewSubForm(prev => ({
+        ...prev,
+        skAdminId: value,
+        name: value ? `Sub-Org (${value})` : '',
+        shortName: value ? `SO-${value}` : '',
+        address: value ? 'Central DB Sync Location' : ''
+      }));
+    }
+  };
+
   // Filter & Sort logic for All Sub Organizations
   let filteredSubs = [...subOrganizations];
 
@@ -87,18 +115,6 @@ export default function SubOrganizationsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredSubs.length / pageSize));
   const validCurrentPage = Math.min(currentPage, totalPages);
   const paginatedSubs = filteredSubs.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize);
-
-  const getParentOrgName = (sub) => {
-    if (sub.orgId) {
-      const org = organizations.find(o => o.id === sub.orgId);
-      if (org) return org.name;
-    }
-    if (sub.parentOrgNum !== undefined) {
-      const org = organizations.find(o => o.parentOrgNum === sub.parentOrgNum);
-      if (org) return org.name;
-    }
-    return `Parent Org #${sub.parentOrgNum || 1}`;
-  };
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
@@ -139,7 +155,7 @@ export default function SubOrganizationsPage() {
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* 1. Sub-Organizations Top Section */}
-      <div className="flex justify-between items-end gap-4">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Sub-Organizations</h1>
           <p className="text-gray-500 text-sm mt-1.5 font-medium">Ward-level and regional operational units.</p>
@@ -147,65 +163,16 @@ export default function SubOrganizationsPage() {
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-brand-blue hover:bg-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
+            className="w-full sm:w-auto justify-center bg-brand-blue hover:bg-brand-blueHover-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" />
-            <span>Map New Sub-Org</span>
+            <span>Link New Sub-Org</span>
           </button>
         )}
       </div>
 
+      {/* 2. All Sub Organizations Section */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Unit Identity</th>
-                <th className="px-6 py-4">Parent Link</th>
-                <th className="px-6 py-4">SK Sync ID</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {subOrganizations.slice(0, 5).map((s) => (
-                <tr key={s.id} className="hover:bg-purple-50/30 transition">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-gray-800 text-base">{s.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-brand-blue" />
-                      <span>{s.address}</span>
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-100 rounded-lg text-xs font-bold inline-flex items-center gap-1.5">
-                      <GitMerge className="w-3.5 h-3.5" />
-                      {getParentOrgName(s)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-blue-50 text-brand-blue border border-blue-100 rounded-lg font-mono text-xs font-bold">
-                      {s.skAdminId || `SK-SUB-${s.code}`}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setEditSub({ ...s })}
-                      className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-100 transition text-xs font-bold inline-flex items-center gap-1.5 bg-white shadow-xs"
-                    >
-                      <Pencil className="w-3.5 h-3.5 text-gray-500" />
-                      <span>Edit</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 2. All Sub Organizations Section (Matching Screenshot 3) */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-        {/* Card Header with Collapse Toggle */}
         <div 
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="px-6 py-5 border-b border-gray-100 bg-white flex justify-between items-center cursor-pointer select-none"
@@ -218,9 +185,8 @@ export default function SubOrganizationsPage() {
 
         {!isCollapsed && (
           <>
-            {/* 4 Filters Row */}
-            <div className="px-6 py-4 border-b border-gray-100 bg-white grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
-              {/* Filter 1: Name */}
+            {/* Filters */}
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-white grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
               <div className="flex items-center gap-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[40px]">Name</label>
                 <input
@@ -235,27 +201,8 @@ export default function SubOrganizationsPage() {
                 />
               </div>
 
-              {/* Filter 2: Parent Organization */}
               <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[70px]">Parent Org</label>
-                <select
-                  value={filterParentOrg}
-                  onChange={(e) => {
-                    setFilterParentOrg(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue bg-white shadow-xs cursor-pointer truncate"
-                >
-                  <option value="ALL">Select parent organization</option>
-                  {organizations.map(o => (
-                    <option key={o.id} value={o.parentOrgNum || o.id}>{o.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter 3: Short Name */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[75px]">Short Name</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">Short Name</label>
                 <input
                   type="text"
                   value={filterShortName}
@@ -268,7 +215,6 @@ export default function SubOrganizationsPage() {
                 />
               </div>
 
-              {/* Filter 4: Sort By */}
               <div className="flex items-center gap-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[55px]">Sort By</label>
                 <select
@@ -306,16 +252,16 @@ export default function SubOrganizationsPage() {
                       <td className="px-6 py-4 text-gray-600 text-sm font-mono">{s.code}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2.5">
-                          <button
+                          {/* <button
                             onClick={() => setEditSub({ ...s })}
-                            className="px-4 py-1.5 bg-[#3894db] hover:bg-[#2b7bb8] text-white rounded-lg text-xs font-semibold shadow-xs transition"
+                            className="px-4 py-1.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white rounded-lg text-xs font-semibold shadow-xs transition"
                           >
                             Edit
-                          </button>
+                          </button> */}
                           {isAdmin && (
                             <button
                               onClick={() => setDeleteSubTarget(s)}
-                              className="px-4 py-1.5 bg-white border border-[#3894db] text-[#3894db] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition"
+                              className="px-4 py-1.5 bg-white border border-[#21A9DF] text-[#168FC2] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition"
                             >
                               Delete
                             </button>
@@ -335,7 +281,6 @@ export default function SubOrganizationsPage() {
               </table>
             </div>
 
-            {/* Pagination Controls */}
             <div className="px-6 border-t border-gray-100 bg-white">
               <Pagination
                 currentPage={validCurrentPage}
@@ -355,6 +300,7 @@ export default function SubOrganizationsPage() {
         subtitle="Create ward or sub-unit mapped to a parent organization."
       >
         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
+          {/* Editable Integration ID Field */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3.5 items-start">
             <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
               <Building2 className="w-5 h-5" />
@@ -367,23 +313,23 @@ export default function SubOrganizationsPage() {
                 type="text"
                 required
                 value={newSubForm.skAdminId}
-                onChange={(e) => setNewSubForm({ ...newSubForm, skAdminId: e.target.value })}
+                onChange={handleSkAdminIdChange}
                 placeholder="SK-SUB-XXXX"
                 className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
               />
               <p className="text-[10px] text-blue-600 mt-1 font-medium">
-                This ID hooks into the central database to automatically import and synchronize farmer records.
+                Enter an ID to automatically pull sub-organization details.
               </p>
             </div>
           </div>
 
+          {/* Locked Parent Org Selection */}
           <div>
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Parent Organization *</label>
             <select
-              required
+              disabled
               value={newSubForm.orgId}
-              onChange={(e) => setNewSubForm({ ...newSubForm, orgId: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white cursor-pointer"
+              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
             >
               {organizations.map(o => (
                 <option key={o.id} value={o.id}>{o.name}</option>
@@ -391,62 +337,52 @@ export default function SubOrganizationsPage() {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Locked Sub-Org Full Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Sub-Org Full Name *</label>
               <input
                 type="text"
-                required
+                readOnly
                 value={newSubForm.name}
-                onChange={(e) => setNewSubForm({ ...newSubForm, name: e.target.value })}
-                placeholder="e.g. Bhakhanje Tea Estate"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Unique Code *</label>
-              <input
-                type="text"
-                required
-                value={newSubForm.code}
-                onChange={(e) => setNewSubForm({ ...newSubForm, code: e.target.value })}
-                placeholder="e.g. 9795"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white font-mono"
+                placeholder="Auto-filled from Integration ID"
+                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
           </div>
 
+          {/* Locked Short Name & Address */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Short Name</label>
               <input
                 type="text"
+                readOnly
                 value={newSubForm.shortName}
-                onChange={(e) => setNewSubForm({ ...newSubForm, shortName: e.target.value })}
-                placeholder="e.g. Bhakhanje"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white"
+                placeholder="Auto-filled short name"
+                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Address</label>
               <input
                 type="text"
-                required
+                readOnly
                 value={newSubForm.address}
-                onChange={(e) => setNewSubForm({ ...newSubForm, address: e.target.value })}
-                placeholder="e.g. Solukhumbu"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white"
+                placeholder="Auto-filled address"
+                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
           </div>
 
+          {/* Editable Email and Password Fields */}
           <div className="border border-gray-200 rounded-xl p-4 relative mt-2">
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
               Sub-Org Unit Access Credentials
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Unit Email</label>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Unit Email *</label>
                 <input
                   type="email"
                   required
@@ -457,7 +393,7 @@ export default function SubOrganizationsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Secure Password</label>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Secure Password *</label>
                 <input
                   type="password"
                   required
@@ -513,9 +449,6 @@ export default function SubOrganizationsPage() {
                   placeholder="SK-SUB-XXXX"
                   className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
                 />
-                <p className="text-[10px] text-blue-600 mt-1 font-medium">
-                  Update the ID used to synchronize this sub-organization with the central database.
-                </p>
               </div>
             </div>
 
@@ -586,7 +519,7 @@ export default function SubOrganizationsPage() {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-[#3894db] hover:bg-[#2b7bb8] text-white font-bold rounded-xl shadow-md transition text-sm"
+                className="px-6 py-2.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white font-bold rounded-xl shadow-md transition text-sm"
               >
                 Save Changes
               </button>

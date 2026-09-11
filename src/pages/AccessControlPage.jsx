@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { 
@@ -12,14 +13,15 @@ import {
 } from 'lucide-react';
 
 export default function AccessControlPage() {
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const { organizations, subOrganizations, accessControl, toggleAccessControl } = useData();
 
   if (!isAdmin) {
     return (
       <div className="p-12 text-center text-gray-500">
-        <p className="font-bold">Restricted Access</p>
-        <p className="text-xs text-gray-400 mt-1">Super Admin credentials required to configure access matrix.</p>
+        <p className="font-bold">{t('Restricted Access')}</p>
+        <p className="text-xs text-gray-400 mt-1">{t('Super Admin credentials required to configure access matrix.')}</p>
       </div>
     );
   }
@@ -28,8 +30,8 @@ export default function AccessControlPage() {
     <div className="space-y-8 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Access Control Matrix</h1>
-        <p className="text-gray-500 text-sm mt-1.5 font-medium">Fine-grained permission gates for Organizations & Sub-Units.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{t('Access Control')}</h1>
+        {/* <p className="text-gray-500 text-sm mt-1.5 font-medium">{t('Fine-grained permission gates for Organizations & Sub-Units.')}</p> */}
       </div>
 
       {/* Parent Organizations Permissions Table */}
@@ -37,19 +39,19 @@ export default function AccessControlPage() {
         <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <Building2 className="w-5 h-5 text-brand-blue" />
-            <span>Parent Organization Privileges</span>
+            <span>{t('Parent Organization Privileges')}</span>
           </h2>
-          <span className="text-xs text-gray-400 font-semibold">{organizations.length} Organizations Registered</span>
+          <span className="text-xs text-gray-400 font-semibold">{t('{{count}} Organizations Registered', { count: organizations.length })}</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase">
               <tr>
-                <th className="px-6 py-4">Organization</th>
-                <th className="px-6 py-4 text-center">Broadcast SMS Advisory</th>
-                <th className="px-6 py-4 text-center">Onboard Farmers</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4">{t('Organization')}</th>
+                <th className="px-6 py-4 text-center">{t('Broadcast SMS Advisory')}</th>
+                <th className="px-6 py-4 text-center">{t('Onboard Farmers')}</th>
+                <th className="px-6 py-4 text-right">{t('Status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -102,7 +104,7 @@ export default function AccessControlPage() {
 
                     <td className="px-6 py-4 text-right">
                       <span className="px-2.5 py-1 bg-green-50 text-brand-green rounded-lg text-xs font-bold">
-                        Synchronized
+                        {t('Synchronized')}
                       </span>
                     </td>
                   </tr>
@@ -118,19 +120,19 @@ export default function AccessControlPage() {
         <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <GitMerge className="w-5 h-5 text-purple-600" />
-            <span>Sub-Organization / Ward Privileges</span>
+            <span>{t('Sub-Organization / Ward Privileges')}</span>
           </h2>
-          <span className="text-xs text-gray-400 font-semibold">{subOrganizations.length} Sub-Units Mapped</span>
+          <span className="text-xs text-gray-400 font-semibold">{t('{{count}} Sub-Units Mapped', { count: subOrganizations.length })}</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase">
               <tr>
-                <th className="px-6 py-4">Sub-Organization</th>
-                <th className="px-6 py-4 text-center">Broadcast SMS Advisory</th>
-                <th className="px-6 py-4 text-center">Onboard Farmers</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4">{t('Sub-Organization')}</th>
+                <th className="px-6 py-4 text-center">{t('Broadcast SMS Advisory')}</th>
+                <th className="px-6 py-4 text-center">{t('Onboard Farmers')}</th>
+                <th className="px-6 py-4 text-right">{t('Status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -142,7 +144,7 @@ export default function AccessControlPage() {
                   <tr key={sub.id} className="hover:bg-purple-50/20 transition">
                     <td className="px-6 py-4">
                       <p className="font-bold text-gray-800">{sub.name}</p>
-                      <p className="text-xs text-gray-400 font-mono">Code: {sub.code}</p>
+                      <p className="text-xs text-gray-400 font-mono">{t('Code:')} {sub.code}</p>
                     </td>
 
                     {/* Broadcast SMS Toggle */}
@@ -183,7 +185,7 @@ export default function AccessControlPage() {
 
                     <td className="px-6 py-4 text-right">
                       <span className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold">
-                        Scoped
+                        {t('Scoped')}
                       </span>
                     </td>
                   </tr>

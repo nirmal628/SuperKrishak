@@ -18,7 +18,7 @@ export default function InfoTooltip({ text, label = 'More information', classNam
       </button>
       <span
         role="tooltip"
-        className={`absolute z-30 right-0 top-7 w-64 rounded-lg bg-gray-900 px-3 py-2 text-left text-xs font-medium leading-relaxed text-white shadow-lg transition-opacity ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}
+        className={`absolute z-30 right-0 top-7 w-64 rounded-lg bg-[#0B2533] px-3 py-2 text-left text-xs font-medium leading-relaxed text-white shadow-lg transition-opacity ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}
       >
         {text}
       </span>

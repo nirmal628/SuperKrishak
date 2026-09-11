@@ -41,8 +41,8 @@ export default function LeafletMap({
       if (m.location) {
         const meterMarker = L.circleMarker(m.location, {
           radius: 8,
-          fillColor: '#205B90',
-          color: '#ffffff',
+          fillColor: '#2684C6',
+          color: '#E8F4F3',
           weight: 2,
           fillOpacity: 0.9
           });
@@ -64,7 +64,7 @@ export default function LeafletMap({
       if (f.coords) {
         L.circleMarker(f.coords, {
           radius: 6,
-          fillColor: '#2DA86E',
+          fillColor: '#16A66A',
           color: '#ffffff',
           weight: 2,
           fillOpacity: 0.8
@@ -72,7 +72,7 @@ export default function LeafletMap({
         .bindPopup(`
           <div style="font-family: Inter, sans-serif; padding: 2px;">
             <p style="font-weight: bold; font-size: 13px; color: #1F2937; margin: 0 0 2px 0;">${f.name}</p>
-            <p style="font-size: 11px; color: #2DA86E; font-weight: 600; margin: 0;">${f.occupation}</p>
+            <p style="font-size: 11px; color: #0B2533; font-weight: 600; margin: 0;">${f.occupation}</p>
           </div>
         `)
         .addTo(group);

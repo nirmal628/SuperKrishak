@@ -14,7 +14,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
           currentPage === 1
             ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            : 'border-[#DCE7EA] text-[#64748B] hover:bg-[#E8F4F3]'
         }`}
       >
         <ChevronLeft className="w-3.5 h-3.5" />
@@ -28,8 +28,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
             onClick={() => onPageChange(p)}
             className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
               isActive
-                ? 'bg-blue-50 text-brand-blue border border-brand-blue shadow-xs font-black'
-                : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#E8F4F3] text-[#008F83] border border-[#008F83] shadow-xs font-black'
+                : 'border border-[#DCE7EA] text-[#64748B] hover:bg-[#E8F4F3]'
             }`}
           >
             {p}
@@ -43,7 +43,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
           currentPage === totalPages
             ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            : 'border-[#DCE7EA] text-[#64748B] hover:bg-[#E8F4F3]'
         }`}
       >
         <ChevronRight className="w-3.5 h-3.5" />

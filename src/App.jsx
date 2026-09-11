@@ -21,6 +21,7 @@ import CommunicationPage from './pages/CommunicationPage';
 import AccessControlPage from './pages/AccessControlPage';
 import FieldDataPage from './pages/FeildDataPage';
 import FarmerActivityPage from './pages/FarmerActivityPage';
+import FarmerLeaderBordPage from './pages/FarmerLeaderBordPage';
 
 function MainApp() {
   const { isLoggedIn, role } = useAuth();
@@ -79,6 +80,13 @@ function MainApp() {
             }}
           />
         );
+      case 'farmer_leaderboard':
+        return (
+          <FarmerLeaderBordPage
+          farmerId={selectedFarmerId} 
+            onNavigate={navigate}
+          />
+        );  
       case 'farmer_activity':
         return (
           <FarmerActivityPage
@@ -132,7 +140,7 @@ function MainApp() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC]">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)] lg:flex-row">
       {/* Dynamic Sidebar */}
       <Sidebar currentRoute={currentRoute} onNavigate={navigate} />
 
@@ -145,7 +153,7 @@ function MainApp() {
         />
 
         {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {renderActivePage()}
         </main>
       </div>

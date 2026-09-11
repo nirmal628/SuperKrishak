@@ -8,18 +8,23 @@ export default {
     extend: {
       colors: {
         brand: {
-          blue: '#205B90',
-          blueHover: '#174773',
-          green: '#2DA86E',
-          greenHover: '#238959',
-          lightBlue: '#F0F6FB',
-          dark: '#1F2937',
-          actionBlue: '#3894db',
-          actionBlueHover: '#2b7bb8',
+          blue: '#008F83',
+          blueHover: '#00756C',
+          green: '#16A66A',
+          greenHover: '#118653',
+          lightBlue: '#EEF6FB',
+          dark: '#14212B',
+          actionBlue: '#2684C6',
+          actionBlueHover: '#1C6EA8',
+          deep: '#0B2533',
+          navy: '#123847',
+          mint: '#E8F4F3',
+          border: '#DCE7EA',
+          muted: '#64748B',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Nunito Sans', 'sans-serif'],
       }
     },
   },
