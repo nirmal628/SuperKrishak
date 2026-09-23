@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import logoImg from './frame.png'; // Adjust path/filename to match your project
+import logoImg from '../../data/images/frame1.png'; // Adjust path/filename to match your project
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard,
