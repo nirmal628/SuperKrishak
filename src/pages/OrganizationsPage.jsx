@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Building2,
   GitMerge,
-  Users
+  Users,
+  CheckCircle2
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import Pagination from '../components/common/Pagination';
@@ -40,6 +41,10 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
   const [editOrg, setEditOrg] = useState(null);
   const [deleteOrgTarget, setDeleteOrgTarget] = useState(null);
 
+  // Verification state for Link New Organization Modal
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
   // Form states for new org
   const [newOrgForm, setNewOrgForm] = useState({
     name: '',
@@ -51,31 +56,60 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
     password: ''
   });
 
-  // Handler to auto-fill fields when SK Admin ID is entered
+  // Handle SK Admin ID input change and reset verification
   const handleSkAdminIdChange = (e) => {
     const value = e.target.value;
+    setNewOrgForm(prev => ({
+      ...prev,
+      skAdminId: value,
+      name: isVerified ? '' : prev.name,
+      shortName: isVerified ? '' : prev.shortName,
+      address: isVerified ? '' : prev.address
+    }));
+    setIsVerified(false);
+    setVerificationError('');
+  };
 
-    // Check if entered ID matches existing org data (or replace with your API fetch)
-    const matchedData = organizations.find(o => o.skAdminId === value);
+  // Explicit Connect / Verification Action
+  const handleVerifyOrg = (e) => {
+    e.preventDefault();
+    const inputId = newOrgForm.skAdminId.trim();
 
-    if (matchedData) {
-      setNewOrgForm(prev => ({
-        ...prev,
-        skAdminId: value,
-        name: matchedData.name || '',
-        shortName: matchedData.shortName || '',
-        address: matchedData.address || ''
-      }));
-    } else {
-      // Keep ID updated and set auto-filled display values
-      setNewOrgForm(prev => ({
-        ...prev,
-        skAdminId: value,
-        name: value ? `Organization (${value})` : '',
-        shortName: value ? `ORG-${value}` : '',
-        address: value ? 'Central DB Sync Location' : ''
-      }));
+    if (!inputId) {
+      setVerificationError('Please enter an Integration ID.');
+      setIsVerified(false);
+      return;
     }
+
+    // Search database for matching SK Admin ID, code, or ID
+    const match = organizations.find(
+      o => o.skAdminId?.toLowerCase() === inputId.toLowerCase() ||
+           o.code?.toLowerCase() === inputId.toLowerCase() ||
+           o.id?.toLowerCase() === inputId.toLowerCase()
+    );
+
+    if (match) {
+      setNewOrgForm(prev => ({
+        ...prev,
+        name: match.name || '',
+        shortName: match.shortName || match.name || '',
+        code: match.code || inputId,
+        address: match.address || 'N/A'
+      }));
+      setIsVerified(true);
+      setVerificationError('');
+    } else {
+      setIsVerified(false);
+      setVerificationError('Invalid Integration ID. Please input correct ID.');
+    }
+  };
+
+  // Reset modal state
+  const resetAddModal = () => {
+    setIsAddModalOpen(false);
+    setIsVerified(false);
+    setVerificationError('');
+    setNewOrgForm({ name: '', shortName: '', code: '', skAdminId: '', address: '', email: '', password: '' });
   };
 
   // Filter & Sort logic for All Organizations
@@ -106,6 +140,8 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
+    if (!isVerified) return; // Guard Clause
+
     addOrganization({
       name: newOrgForm.name,
       shortName: newOrgForm.shortName || newOrgForm.name,
@@ -114,8 +150,7 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
       address: newOrgForm.address,
       status: 'Active'
     });
-    setIsAddModalOpen(false);
-    setNewOrgForm({ name: '', shortName: '', code: '', skAdminId: '', address: '', email: '', password: '' });
+    resetAddModal();
   };
 
   const handleEditSubmit = (e) => {
@@ -144,12 +179,11 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
       <div className="flex justify-between items-end gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Parent Organizations</h1>
-          
         </div>
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-brand-blue text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
+            className="bg-brand-blue text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Link New Organization</span>
@@ -220,16 +254,10 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
                       <td className="px-6 py-4 text-gray-600 text-sm font-mono">{o.code || 'N/A'}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2.5">
-                          {/* <button
-                            onClick={() => setEditOrg({ ...o })}
-                            className="px-4 py-1.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white rounded-lg text-xs font-semibold shadow-xs transition"
-                          >
-                            Edit
-                          </button> */}
                           {isAdmin && (
                             <button
                               onClick={() => setDeleteOrgTarget(o)}
-                              className="px-4 py-1.5 bg-white border border-[#21A9DF] text-[#168FC2] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition"
+                              className="px-4 py-1.5 bg-white border border-[#21A9DF] text-[#168FC2] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
                             >
                               Delete
                             </button>
@@ -239,7 +267,7 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
                               onSelectOrg(o.id);
                               onNavigate('organization_detail');
                             }}
-                            className="px-4 py-1.5 bg-[#008F83] hover:bg-[#00756C] text-white rounded-lg text-xs font-semibold shadow-xs transition"
+                            className="px-4 py-1.5 bg-[#008F83] hover:bg-[#00756C] text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
                           >
                             View More
                           </button>
@@ -272,44 +300,71 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
       {/* Modal: Link New Organization */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={resetAddModal}
         title="Link Organization"
         subtitle="Sync database and create master access credentials."
       >
         <form onSubmit={handleAddSubmit} className="p-6 space-y-5">
-          {/* Editable Integration ID Field */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3.5 items-start">
-            <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
-              <Building2 className="w-5 h-5" />
+          
+          {/* SK Admin Portal Integration ID Field with Connect Button */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex gap-3 items-start mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
+                  SK Admin Portal Integration ID *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={newOrgForm.skAdminId}
+                    onChange={handleSkAdminIdChange}
+                    placeholder="e.g. SK-ORG-5006, 5006"
+                    className="flex-1 border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyOrg}
+                    className="px-4 py-2.5 bg-brand-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition whitespace-nowrap shadow-sm cursor-pointer"
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
-                SK Admin Portal Integration ID *
-              </label>
-              <input
-                type="text"
-                required
-                value={newOrgForm.skAdminId}
-                onChange={handleSkAdminIdChange}
-                placeholder="5000"
-                className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
-              />
-              <p className="text-[10px] text-blue-600 mt-1 font-medium">
-                Enter an ID to automatically pull organization details.
-              </p>
-            </div>
+
+            {/* Verification Status Feedback */}
+            {isVerified && (
+              <div className="mt-3 flex items-center gap-2 text-emerald-700 bg-emerald-100/80 border border-emerald-300 px-3 py-2 rounded-lg text-xs font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span><strong>Organization Found & Connected!</strong> Database records matched.</span>
+              </div>
+            )}
+
+            {verificationError && (
+              <div className="mt-3 flex items-center gap-2 text-red-700 bg-red-100/80 border border-red-300 px-3 py-2 rounded-lg text-xs font-medium">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{verificationError}</span>
+              </div>
+            )}
           </div>
 
           {/* Locked Organization Full Name */}
           <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Organization Full Name *</label>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                Organization Full Name *
+              </label>
               <input
                 type="text"
+                required
                 readOnly
                 value={newOrgForm.name}
-                placeholder="Auto-filled from Integration ID"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
+                placeholder="Connect ID to auto-fill"
+                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed font-medium"
               />
             </div>
           </div>
@@ -338,7 +393,7 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
             </div>
           </div>
 
-          {/* Editable Login Email & Secure Password */}
+          {/* Login Email & Secure Password */}
           <div className="border border-gray-200 rounded-xl p-4 relative mt-3">
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
               Generate Access Credentials
@@ -369,17 +424,26 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
             </div>
           </div>
 
+          {/* Modal Action Buttons */}
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+              onClick={resetAddModal}
+              className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
             >
               Cancel
             </button>
+
+            {/* Blocked / Dynamic Submit Button */}
             <button
               type="submit"
-              className="px-6 py-2.5 bg-brand-blue hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition text-sm"
+              disabled={!isVerified}
+              title={!isVerified ? 'Please connect a valid Integration ID first' : ''}
+              className={`px-6 py-2.5 font-bold rounded-xl transition text-sm ${
+                isVerified
+                  ? 'bg-brand-blue hover:bg-blue-800 text-white shadow-md cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              }`}
             >
               Establish Link
             </button>
@@ -442,29 +506,17 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
               </div>
             </div>
 
-            {/* <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Status</label>
-              <select
-                value={editOrg.status || 'Active'}
-                onChange={(e) => setEditOrg({ ...editOrg, status: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white cursor-pointer"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div> */}
-
             <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => setEditOrg(null)}
-                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white font-bold rounded-xl shadow-md transition text-sm"
+                className="px-6 py-2.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white font-bold rounded-xl shadow-md transition text-sm cursor-pointer"
               >
                 Save Changes
               </button>
@@ -496,14 +548,14 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
               <button
                 type="button"
                 onClick={() => setDeleteOrgTarget(null)}
-                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition text-sm"
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition text-sm cursor-pointer"
               >
                 Confirm Delete
               </button>
@@ -511,7 +563,6 @@ export default function OrganizationsPage({ onNavigate, onSelectOrg }) {
           </div>
         </Modal>
       )}
-
     </div>
   );
 }

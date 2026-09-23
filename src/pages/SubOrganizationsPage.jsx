@@ -10,7 +10,8 @@ import {
   MapPin, 
   AlertTriangle,
   GitMerge,
-  Building2
+  Building2,
+  CheckCircle2
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import Pagination from '../components/common/Pagination';
@@ -25,7 +26,7 @@ export default function SubOrganizationsPage() {
     deleteSubOrganization 
   } = useData();
 
-  // "All Sub Organizations" table state & 4 filters
+  // "All Sub Organizations" table state & filters
   const [filterName, setFilterName] = useState('');
   const [filterParentOrg, setFilterParentOrg] = useState('ALL');
   const [filterShortName, setFilterShortName] = useState('');
@@ -39,6 +40,10 @@ export default function SubOrganizationsPage() {
   const [editSub, setEditSub] = useState(null);
   const [deleteSubTarget, setDeleteSubTarget] = useState(null);
 
+  // Verification state for Link/Map Sub-Org Modal
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
   // Form states for new sub-org
   const [newSubForm, setNewSubForm] = useState({
     orgId: organizations[0]?.id || '',
@@ -51,32 +56,70 @@ export default function SubOrganizationsPage() {
     password: ''
   });
 
-  // Handler to auto-fill fields when SK Admin ID is entered
+  // Handle SK Admin ID input change and reset verification
   const handleSkAdminIdChange = (e) => {
     const value = e.target.value;
+    setNewSubForm(prev => ({
+      ...prev,
+      skAdminId: value,
+      name: isVerified ? '' : prev.name,
+      shortName: isVerified ? '' : prev.shortName,
+      address: isVerified ? '' : prev.address
+    }));
+    setIsVerified(false);
+    setVerificationError('');
+  };
 
-    // Check if entered ID matches existing sub-org data (or replace with your API fetch)
-    const matchedData = subOrganizations.find(s => s.skAdminId === value);
+  // Explicit Connect / Verification Action
+  const handleVerifySubOrg = (e) => {
+    e.preventDefault();
+    const inputId = newSubForm.skAdminId.trim();
 
-    if (matchedData) {
-      setNewSubForm(prev => ({
-        ...prev,
-        skAdminId: value,
-        orgId: matchedData.orgId || prev.orgId,
-        name: matchedData.name || '',
-        shortName: matchedData.shortName || '',
-        address: matchedData.address || ''
-      }));
-    } else {
-      // Keep ID updated and allow manual entry / clear auto-filled values
-      setNewSubForm(prev => ({
-        ...prev,
-        skAdminId: value,
-        name: value ? `Sub-Org (${value})` : '',
-        shortName: value ? `SO-${value}` : '',
-        address: value ? 'Central DB Sync Location' : ''
-      }));
+    if (!inputId) {
+      setVerificationError('Please enter an Integration ID.');
+      setIsVerified(false);
+      return;
     }
+
+    // Search database for matching SK Admin ID, code, or ID
+    const match = subOrganizations.find(
+      s => s.skAdminId?.toLowerCase() === inputId.toLowerCase() ||
+           s.code?.toLowerCase() === inputId.toLowerCase() ||
+           s.id?.toLowerCase() === inputId.toLowerCase()
+    );
+
+    if (match) {
+      setNewSubForm(prev => ({
+        ...prev,
+        name: match.name || '',
+        shortName: match.shortName || match.name || '',
+        code: match.code || inputId,
+        address: match.address || 'N/A',
+        orgId: match.orgId || prev.orgId || organizations[0]?.id || ''
+      }));
+      setIsVerified(true);
+      setVerificationError('');
+    } else {
+      setIsVerified(false);
+      setVerificationError('Invalid Integration ID. Please input correct ID.');
+    }
+  };
+
+  // Reset Add/Map Modal
+  const resetAddModal = () => {
+    setIsAddModalOpen(false);
+    setIsVerified(false);
+    setVerificationError('');
+    setNewSubForm({ 
+      orgId: organizations[0]?.id || '', 
+      name: '', 
+      shortName: '', 
+      code: '', 
+      skAdminId: '', 
+      address: '', 
+      email: '', 
+      password: '' 
+    });
   };
 
   // Filter & Sort logic for All Sub Organizations
@@ -118,6 +161,8 @@ export default function SubOrganizationsPage() {
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
+    if (!isVerified) return; // Guard clause
+
     addSubOrganization({
       orgId: newSubForm.orgId || organizations[0]?.id,
       name: newSubForm.name,
@@ -127,8 +172,7 @@ export default function SubOrganizationsPage() {
       address: newSubForm.address,
       status: 'Active'
     });
-    setIsAddModalOpen(false);
-    setNewSubForm({ orgId: organizations[0]?.id || '', name: '', shortName: '', code: '', skAdminId: '', address: '', email: '', password: '' });
+    resetAddModal();
   };
 
   const handleEditSubmit = (e) => {
@@ -163,7 +207,7 @@ export default function SubOrganizationsPage() {
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="w-full sm:w-auto justify-center bg-brand-blue hover:bg-brand-blueHover-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
+            className="w-full sm:w-auto justify-center bg-brand-blue hover:bg-brand-blueHover text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Link New Sub-Org</span>
@@ -252,16 +296,10 @@ export default function SubOrganizationsPage() {
                       <td className="px-6 py-4 text-gray-600 text-sm font-mono">{s.code}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2.5">
-                          {/* <button
-                            onClick={() => setEditSub({ ...s })}
-                            className="px-4 py-1.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white rounded-lg text-xs font-semibold shadow-xs transition"
-                          >
-                            Edit
-                          </button> */}
                           {isAdmin && (
                             <button
                               onClick={() => setDeleteSubTarget(s)}
-                              className="px-4 py-1.5 bg-white border border-[#21A9DF] text-[#168FC2] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition"
+                              className="px-4 py-1.5 bg-white border border-[#21A9DF] text-[#168FC2] hover:bg-blue-50 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
                             >
                               Delete
                             </button>
@@ -295,32 +333,56 @@ export default function SubOrganizationsPage() {
       {/* Modal: Map New Sub-Organization */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={resetAddModal}
         title="Map Sub-Organization"
         subtitle="Create ward or sub-unit mapped to a parent organization."
       >
         <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
-          {/* Editable Integration ID Field */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3.5 items-start">
-            <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
-              <Building2 className="w-5 h-5" />
+          
+          {/* SK Admin Portal Integration ID Field with Connect Button */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex gap-3 items-start mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg text-brand-blue flex-shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
+                  SK Admin Portal Integration ID *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={newSubForm.skAdminId}
+                    onChange={handleSkAdminIdChange}
+                    placeholder="e.g. SK-SUB-5006-1, 5006-1"
+                    className="flex-1 border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifySubOrg}
+                    className="px-4 py-2.5 bg-brand-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition whitespace-nowrap shadow-sm cursor-pointer"
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-brand-blue uppercase tracking-widest mb-1">
-                SK Admin Portal Integration ID *
-              </label>
-              <input
-                type="text"
-                required
-                value={newSubForm.skAdminId}
-                onChange={handleSkAdminIdChange}
-                placeholder="SK-SUB-XXXX"
-                className="w-full border border-blue-300 rounded-lg p-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-brand-blue/30 shadow-xs bg-white"
-              />
-              <p className="text-[10px] text-blue-600 mt-1 font-medium">
-                Enter an ID to automatically pull sub-organization details.
-              </p>
-            </div>
+
+            {/* Verification Status Feedback */}
+            {isVerified && (
+              <div className="mt-3 flex items-center gap-2 text-emerald-700 bg-emerald-100/80 border border-emerald-300 px-3 py-2 rounded-lg text-xs font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span><strong>Sub-Organization Found & Connected!</strong> Database records matched.</span>
+              </div>
+            )}
+
+            {verificationError && (
+              <div className="mt-3 flex items-center gap-2 text-red-700 bg-red-100/80 border border-red-300 px-3 py-2 rounded-lg text-xs font-medium">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{verificationError}</span>
+              </div>
+            )}
           </div>
 
           {/* Locked Parent Org Selection */}
@@ -329,7 +391,7 @@ export default function SubOrganizationsPage() {
             <select
               disabled
               value={newSubForm.orgId}
-              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
+              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed font-medium"
             >
               {organizations.map(o => (
                 <option key={o.id} value={o.id}>{o.name}</option>
@@ -345,8 +407,8 @@ export default function SubOrganizationsPage() {
                 type="text"
                 readOnly
                 value={newSubForm.name}
-                placeholder="Auto-filled from Integration ID"
-                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
+                placeholder="Connect ID to auto-fill"
+                className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed font-medium"
               />
             </div>
           </div>
@@ -406,17 +468,26 @@ export default function SubOrganizationsPage() {
             </div>
           </div>
 
+          {/* Modal Action Buttons */}
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+              onClick={resetAddModal}
+              className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
             >
               Cancel
             </button>
+
+            {/* Blocked / Dynamic Submit Button */}
             <button
               type="submit"
-              className="px-6 py-2.5 bg-brand-blue hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition text-sm"
+              disabled={!isVerified}
+              title={!isVerified ? 'Please connect a valid Integration ID first' : ''}
+              className={`px-6 py-2.5 font-bold rounded-xl transition text-sm ${
+                isVerified
+                  ? 'bg-brand-blue hover:bg-blue-800 text-white shadow-md cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              }`}
             >
               Save Sub-Organization
             </button>
@@ -513,13 +584,13 @@ export default function SubOrganizationsPage() {
               <button
                 type="button"
                 onClick={() => setEditSub(null)}
-                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white font-bold rounded-xl shadow-md transition text-sm"
+                className="px-6 py-2.5 bg-[#21A9DF] hover:bg-[#168FC2] text-white font-bold rounded-xl shadow-md transition text-sm cursor-pointer"
               >
                 Save Changes
               </button>
@@ -548,14 +619,14 @@ export default function SubOrganizationsPage() {
               <button
                 type="button"
                 onClick={() => setDeleteSubTarget(null)}
-                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
+                className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition text-sm"
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition text-sm cursor-pointer"
               >
                 Confirm Delete
               </button>

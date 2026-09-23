@@ -83,7 +83,7 @@ function MainApp() {
       case 'farmer_leaderboard':
         return (
           <FarmerLeaderBordPage
-          farmerId={selectedFarmerId} 
+            farmerId={selectedFarmerId} 
             onNavigate={navigate}
           />
         );  
@@ -109,13 +109,13 @@ function MainApp() {
             onNavigate={navigate} 
           />
         );
-      case 'field_data': // ADD THIS CASE
-  return (
-    <FieldDataPage 
-      fieldId={selectedFieldId} 
-      onNavigate={navigate} 
-    />
-  );
+      case 'field_data':
+        return (
+          <FieldDataPage 
+            fieldId={selectedFieldId} 
+            onNavigate={navigate} 
+          />
+        );
       case 'gpkm':
         return (
           <IoTTelemetryPage 
@@ -152,8 +152,8 @@ function MainApp() {
           onNavigate={navigate} 
         />
 
-        {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        {/* Scrollable Page Body - Removed max-w-7xl and mx-auto for full-width scaling */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full">
           {renderActivePage()}
         </main>
       </div>

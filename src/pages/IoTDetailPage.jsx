@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import { 
   ArrowLeft, 
@@ -15,6 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import WeatherWidget from '../components/widgets/WeatherWidget';
+import LiveWarningsBanner from '../components/widgets/LiveWarningsBanner';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -48,7 +49,18 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
   const [timeRange, setTimeRange] = useState('Daily');
   const [dateRange, setDateRange] = useState('June 01, 2026 - Aug 01, 2026');
 
-  // Complete Parameter Metadata covering all parameters from Image 1
+  // Ref to target the Chart Section for smooth scrolling
+  const chartRef = useRef(null);
+
+  // Helper to change active parameter and scroll to the chart section
+  const handleParamSelect = (key) => {
+    setActiveParam(key);
+    if (chartRef.current) {
+      chartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Complete Parameter Metadata covering all parameters
   const parameterMeta = {
     // --- System Parameters ---
     solarCurrent: { label: 'Solar Current', unit: 'A', color: '#E5A62A', icon: Sun, category: 'System', data: [4.2, 5.1, 8.4, 9.2, 7.8, 3.5, 0.1] },
@@ -111,7 +123,7 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <button
           onClick={() => onNavigate('gpkm')}
-          className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-brand-blue transition bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-xs"
+          className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-brand-blue transition bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-xs cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Telemetry Fleet</span>
@@ -119,7 +131,7 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs"
+          className="px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Download className="w-4 h-4 text-brand-blue" />
           <span>Export CSV Stream</span>
@@ -143,8 +155,10 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
         </div>
       </div>
 
+      {/* Universal Live Warnings Banner */}
+      <LiveWarningsBanner onNavigate={onNavigate} />
 
-      {/* PARAMETERS SELECTOR (IMAGE 2 STYLE) */}
+      {/* PARAMETERS SELECTOR */}
       <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-5">
         
         {/* System Parameters Group */}
@@ -159,8 +173,8 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
               return (
                 <button
                   key={key}
-                  onClick={() => setActiveParam(key)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 border ${
+                  onClick={() => handleParamSelect(key)}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 border cursor-pointer ${
                     isActive
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
@@ -186,8 +200,8 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
               return (
                 <button
                   key={key}
-                  onClick={() => setActiveParam(key)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 border ${
+                  onClick={() => handleParamSelect(key)}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 border cursor-pointer ${
                     isActive
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
@@ -203,14 +217,13 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
       </div>
 
       {/* CHART SECTION */}
-      <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+      <div ref={chartRef} className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-600" />
               <span>{currentParam.label} Dynamic Telemetry</span>
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">Real-time 15-minute telemetry stream captures.</p>
           </div>
 
           {/* Date Range Picker & Range Tabs */}
@@ -230,7 +243,7 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
-                  className={`px-3 py-1 rounded-lg transition-all text-xs ${
+                  className={`px-3 py-1 rounded-lg transition-all text-xs cursor-pointer ${
                     timeRange === range
                       ? 'bg-white text-gray-900 shadow-xs font-semibold'
                       : 'text-gray-500 hover:text-gray-800'
@@ -259,6 +272,7 @@ export default function IoTDetailPage({ meterId, onNavigate }) {
           />
         </div>
       </div>
+
       {/* Weather Forecast Widget */}
       <WeatherWidget />
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Cpu, 
   Gauge, 
@@ -10,7 +10,8 @@ import {
   Search, 
   Filter,
   Phone,
-  MapPin
+  MapPin,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -34,13 +35,89 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
   const [viewMode, setViewMode] = useState('list');
   const [search, setSearch] = useState('');
 
-  // New meter form state
+  // Form State
   const [newMeter, setNewMeter] = useState({
     aepcId: '',
     name: '',
+    farmerName: '',
     orgId: organizations[0]?.id || '',
-    subOrgId: subOrganizations[0]?.id || ''
+    subOrgId: ''
   });
+
+  // Verification State
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
+  // Cascading Sub-Org Filtering based on Parent Org
+  const filteredSubOrgs = subOrganizations.filter(s => s.orgId === newMeter.orgId);
+
+  // Set default subOrgId when modal opens or parent org changes
+  useEffect(() => {
+    if (!newMeter.subOrgId && filteredSubOrgs.length > 0) {
+      setNewMeter(prev => ({ ...prev, subOrgId: filteredSubOrgs[0].id }));
+    }
+  }, [newMeter.orgId, subOrganizations]);
+
+  // Handle input change & reset verification state on edit
+  const handleAepcIdChange = (e) => {
+    setNewMeter(prev => ({
+      ...prev,
+      aepcId: e.target.value,
+      name: isVerified ? '' : prev.name,
+      farmerName: isVerified ? '' : prev.farmerName
+    }));
+    setIsVerified(false);
+    setVerificationError('');
+  };
+
+  // Explicit Connect / Verification Action
+  const handleVerifyMeter = (e) => {
+    e.preventDefault();
+    const inputId = newMeter.aepcId.trim();
+
+    if (!inputId) {
+      setVerificationError('Please enter an AEPC Meter ID.');
+      setIsVerified(false);
+      return;
+    }
+
+    // Search database for matching AEPC ID or Meter ID
+    const match = gpkm.find(
+      m => m.aepcId?.toLowerCase() === inputId.toLowerCase() ||
+           m.id?.toLowerCase() === inputId.toLowerCase()
+    );
+
+    if (match) {
+      const associatedFarmer = farmers.find(f => f.id === match.farmerId);
+      const matchedOrgId = match.orgId || newMeter.orgId;
+      const availableSubOrgs = subOrganizations.filter(s => s.orgId === matchedOrgId);
+
+      setNewMeter(prev => ({
+        ...prev,
+        name: match.name || match.aepcId || 'GPKM Smart Meter',
+        farmerName: associatedFarmer?.name || match.farmerName || 'Unassigned Farmer',
+        orgId: matchedOrgId,
+        subOrgId: match.subOrgId || availableSubOrgs[0]?.id || prev.subOrgId
+      }));
+
+      setIsVerified(true);
+      setVerificationError('');
+    } else {
+      setIsVerified(false);
+      setVerificationError('Invalid AEPC ID. Please input correct ID.');
+    }
+  };
+
+  // Handle Parent Org change and cascade sub-org selection
+  const handleOrgChange = (e) => {
+    const selectedOrgId = e.target.value;
+    const availableSubOrgs = subOrganizations.filter(s => s.orgId === selectedOrgId);
+    setNewMeter(prev => ({
+      ...prev,
+      orgId: selectedOrgId,
+      subOrgId: availableSubOrgs[0]?.id || ''
+    }));
+  };
 
   // Scoped meters calculation
   let scopedMeters = [...gpkm];
@@ -80,20 +157,29 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
     }
   ];
 
+  const resetForm = () => {
+    setIsConnectModalOpen(false);
+    setIsVerified(false);
+    setVerificationError('');
+    setNewMeter({ 
+      aepcId: '', 
+      name: '', 
+      farmerName: '',
+      orgId: organizations[0]?.id || '', 
+      subOrgId: '' 
+    });
+  };
+
   const handleConnectSubmit = (e) => {
     e.preventDefault();
+    if (!isVerified) return; // Guard clause
+
     addMeter({
       ...newMeter,
       orgId: isOrg ? entityId : newMeter.orgId,
       subOrgId: isSubOrg ? entityId : newMeter.subOrgId
     });
-    setIsConnectModalOpen(false);
-    setNewMeter({ 
-      aepcId: '', 
-      name: '', 
-      orgId: organizations[0]?.id || '', 
-      subOrgId: subOrganizations[0]?.id || '' 
-    });
+    resetForm();
   };
 
   const handleConfigSave = (e) => {
@@ -113,7 +199,7 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
         {isAdmin && (
           <button
             onClick={() => setIsConnectModalOpen(true)}
-            className="bg-brand-blue hover:bg-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
+            className="bg-brand-blue hover:bg-brand-green text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-2 hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" />
             <span>Connect Meter</span>
@@ -206,7 +292,6 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
                 {filteredMeters.map((meter, index) => {
                   const farmer = farmers.find(f => f.id === meter.farmerId);
 
-                  // Extracting farmer name, location, and phone with fallback to meter properties
                   const farmerName = farmer?.name || meter.farmerName || 'Unassigned';
                   const location = meter.locationName || farmer?.location || farmer?.address || 'N/A';
                   const phone = meter.phone || farmer?.mobile || farmer?.phone || 'N/A';
@@ -214,12 +299,10 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
 
                   return (
                     <tr key={meter.id} className="hover:bg-gray-50/60 transition">
-                      {/* List No. */}
                       <td className="px-6 py-4 font-bold text-gray-900 text-sm">
                         {index + 1}
                       </td>
 
-                      {/* Farmer Details (Name + Location + Phone) */}
                       <td className="px-6 py-4">
                         <div className="font-extrabold text-gray-900 text-sm">{farmerName}</div>
                         <div className="flex items-center gap-1.5 text-gray-400 mt-1">
@@ -232,12 +315,10 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
                         </div>
                       </td>
 
-                      {/* Meter Details */}
                       <td className="px-6 py-4">
                         <div className="font-mono font-bold text-gray-900 text-sm">{meter.aepcId || meter.id}</div>
                       </td>
 
-                      {/* Activity Status */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
@@ -252,7 +333,6 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
                         )}
                       </td>
 
-                      {/* Actions */}
                       <td className="px-6 py-4 text-right">
                         <button 
                           title="View meter details" 
@@ -277,41 +357,96 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
       {/* Modal: Connect New Meter */}
       <Modal
         isOpen={isConnectModalOpen}
-        onClose={() => setIsConnectModalOpen(false)}
+        onClose={resetForm}
         title="Connect GPKM Smart Meter"
         subtitle="Provision hardware node and integrate AEPC credentials."
       >
         <form onSubmit={handleConnectSubmit} className="p-6 space-y-4">
+          
+          {/* AEPC Meter ID Input with Connect Button */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">AEPC Meter ID *</label>
-            <input
-              type="text"
-              required
-              value={newMeter.aepcId}
-              onChange={(e) => setNewMeter({ ...newMeter, aepcId: e.target.value })}
-              placeholder="e.g. AEPC-009"
-              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white font-mono"
-            />
+            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              AEPC Meter ID *
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                value={newMeter.aepcId}
+                onChange={handleAepcIdChange}
+                placeholder="e.g. GPA5006-1, GPA0123"
+                className="flex-1 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white font-mono"
+              />
+              <button
+                type="button"
+                onClick={handleVerifyMeter}
+                className="px-4 py-2.5 bg-brand-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition whitespace-nowrap shadow-sm cursor-pointer"
+              >
+                Connect
+              </button>
+            </div>
+
+            {/* Verification Status Feedback */}
+            {isVerified && (
+              <div className="mt-2.5 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg text-xs font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span><strong>Meter Found & Connected!</strong> Device details auto-filled. You can now provision this sensor.</span>
+              </div>
+            )}
+
+            {verificationError && (
+              <div className="mt-2.5 flex items-center gap-2 text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{verificationError}</span>
+              </div>
+            )}
           </div>
 
+          {/* Meter Type / Label (Locked when verified) */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Meter Label / Node Name *</label>
+            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              Meter Type / Label *
+            </label>
             <input
               type="text"
               required
+              disabled={isVerified}
               value={newMeter.name}
               onChange={(e) => setNewMeter({ ...newMeter, name: e.target.value })}
-              placeholder="e.g. South Valley Solar Irrigation Pump"
-              className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white"
+              placeholder="e.g. Kirtipur Municipality 1"
+              className={`w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none ${
+                isVerified ? 'bg-gray-100 text-gray-600 cursor-not-allowed font-medium' : 'bg-white focus:border-brand-blue'
+              }`}
             />
           </div>
 
+          {/* Farmer Details (Locked when verified) */}
+          <div>
+            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+              Farmer Details *
+            </label>
+            <input
+              type="text"
+              required
+              disabled={isVerified}
+              value={newMeter.farmerName}
+              onChange={(e) => setNewMeter({ ...newMeter, farmerName: e.target.value })}
+              placeholder="e.g. Ram Kumar Shrestha"
+              className={`w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none ${
+                isVerified ? 'bg-gray-100 text-gray-600 cursor-not-allowed font-medium' : 'bg-white focus:border-brand-blue'
+              }`}
+            />
+          </div>
+
+          {/* Parent Org & Cascading Sub-Org Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Assign Parent Org</label>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                Assign Parent Org
+              </label>
               <select
                 value={newMeter.orgId}
-                onChange={(e) => setNewMeter({ ...newMeter, orgId: e.target.value })}
+                onChange={handleOrgChange}
                 className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue bg-white cursor-pointer"
               >
                 {organizations.map(o => (
@@ -319,31 +454,47 @@ export default function IoTTelemetryPage({ onNavigate, onSelectMeter }) {
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Assign Sub-Org</label>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                Assign Sub-Org
+              </label>
               <select
                 value={newMeter.subOrgId}
                 onChange={(e) => setNewMeter({ ...newMeter, subOrgId: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-purple-600 bg-white cursor-pointer"
               >
-                {subOrganizations.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
+                {filteredSubOrgs.length > 0 ? (
+                  filteredSubOrgs.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))
+                ) : (
+                  <option value="">No sub-organizations available</option>
+                )}
               </select>
             </div>
           </div>
 
+          {/* Modal Buttons */}
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => setIsConnectModalOpen(false)}
+              onClick={resetForm}
               className="px-5 py-2.5 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition text-sm"
             >
               Cancel
             </button>
+
+            {/* Blocked / Dynamic Submit Button */}
             <button
               type="submit"
-              className="px-6 py-2.5 bg-brand-blue hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition text-sm"
+              disabled={!isVerified}
+              title={!isVerified ? 'Please connect a valid meter ID first' : ''}
+              className={`px-6 py-2.5 font-bold rounded-xl transition text-sm ${
+                isVerified
+                  ? 'bg-brand-blue hover:bg-blue-800 text-white shadow-md cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              }`}
             >
               Provision Sensor
             </button>

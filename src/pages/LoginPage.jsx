@@ -5,8 +5,8 @@ import { Mail, Lock, ArrowRight, AlertCircle, Phone, X, Eye, EyeOff } from 'luci
 // =========================================================================
 // REPLACE THESE IMAGE PATHS WITH YOUR ACTUAL ASSET FILE PATHS
 // =========================================================================
-import logoImg from './frame.png'; // Your SuperKrishak logo image
-import heroBgImg from './farm-illustration.jpg'; // Your farm/tractor landscape image (Optional)
+import logoImg from '../data/images/frame.png'; // Your SuperKrishak logo image
+import heroBgImg from '../data/images/farm.jpg'; // Your farm/tractor landscape image (Optional)
 
 export default function LoginPage() {
   const { login } = useAuth();
